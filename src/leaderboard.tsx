@@ -635,13 +635,20 @@ function DatasetCard({
               </span>
             </>
           ) : (
-            <span className="rounded-md border border-border bg-paper-2 px-2.5 py-1 text-xs text-muted">
-              seq_len: 20
-            </span>
+            <>
+              <span className="rounded-md border border-border bg-paper-2 px-2.5 py-1 text-xs text-muted">
+                seq_len: 20
+              </span>
+              <span className="rounded-md border border-border bg-paper-2 px-2.5 py-1 text-xs text-muted">
+                pred_len: {horizons[0]}
+              </span>
+            </>
           )}
-          {/* Horizon buttons live here for non air-quality tracks; air quality
-              gets its own dedicated pollutant selector row below. */}
-          {track !== 'air_quality' && horizons.map((h) => (
+          {/* Horizon selector — only when there's more than one to switch
+              between (a single horizon is already shown as the pred_len chip,
+              so rendering it again as a button just duplicates it). Air quality
+              uses its own pollutant row below. */}
+          {track !== 'air_quality' && horizons.length > 1 && horizons.map((h) => (
             <Seg key={h} active={h === horizon} onClick={() => setHorizon(h)}>
               {`${copy.horizon} ${h}`}
             </Seg>
