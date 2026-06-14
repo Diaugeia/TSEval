@@ -1,0 +1,18 @@
+{
+  "name": "@diaugeia/tseval-leaderboard",
+  "version": "1.2.2",
+  "private": true,
+  "description": "TS-Eval leaderboard UI (air-quality + stock quant) + data + generation pipeline. Consumed as source via git submodule.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19",
+    "next": ">=15",
+    "next-themes": ">=0.4",
+    "recharts": ">=3"
+  }
+}

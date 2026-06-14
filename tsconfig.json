@@ -1,0 +1,16 @@
+{
+  "//": "For editor/standalone typecheck only. The host site compiles these .tsx via its own Next/Tailwind toolchain; React/Next/recharts types resolve from the host's node_modules.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "jsx": "preserve",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "isolatedModules": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}
