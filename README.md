@@ -1,75 +1,59 @@
-# @diaugeia/tseval-leaderboard
+# TS-Eval leaderboard
 
-The **TS-Eval leaderboard** — UI components and the leaderboard data (single source
-of truth). Extracted from the Diaugeia website so it can evolve independently.
+The **TS-Eval** time-series forecasting leaderboard — a standalone, self-contained
+static site plus the community submission store and validation pipeline.
 
-Consumed by [`Diaugeia/HomePageSourceCode`](https://github.com/Diaugeia/HomePageSourceCode)
-as a **git submodule** at `vendor/tseval-leaderboard`, compiled as source by the host's
-Next.js / Tailwind toolchain (no separate build step).
+**Live:** [tseval.diaugeia.ai](https://tseval.diaugeia.ai) · mirror on
+[Hugging Face Space](https://huggingface.co/spaces/Diaugeia/TSEval).
 
-## Layout
+## How it works
 
 ```
-src/
-  leaderboard.tsx          # <Leaderboard> — tracks, datasets, regression/quant views
-  quant-visualization.tsx  # recharts performance chart + trading-strategy copy
-  types.ts                 # LeaderboardDict (i18n shape) + re-exports
-  index.ts                 # public entry: Leaderboard, LeaderboardData, LeaderboardDict
-data/
-  leaderboard.json         # the board — single source of truth (curated snapshot)
-  visualization_data.json  # cumulative/log-return series for the chart
+GitHub  Diaugeia/tseval-leaderboard   (this repo — single source of truth)
+  ├ app/, src/, lib/, components/   self-contained Next app (UI + en/zh copy + tokens)
+  ├ data/                           leaderboard.json + visualization_data.json (the board)
+  ├ submissions/                    community submission bundles (small JSON, no weights)
+  ├ pipeline/                       TSF-Core contract schema + validate.py + build_leaderboard.py
+  └ .github/workflows/              validate (PRs) + deploy (build once → 2 targets)
+        push main → build static `out/` → deploy to:
+          ├─► Cloudflare Pages  →  tseval.diaugeia.ai
+          └─► Hugging Face Space (static)  →  diaugeia-tseval.static.hf.space
 ```
 
-## Host integration (git submodule)
+Build is **once** in CI, then the same artifact ships to both targets, so they stay
+identical. Both are static (CDN, no cold start).
+
+## Develop
 
 ```bash
-git submodule add git@github.com:Diaugeia/tseval-leaderboard.git vendor/tseval-leaderboard
+bun install
+bun run dev      # http://localhost:3000
+bun run build    # static export → out/
 ```
 
-In the host:
+## Submitting (community)
 
-- `tsconfig.json` paths: `"@tseval": ["vendor/tseval-leaderboard/src/index.ts"]`,
-  `"@tseval/*": ["vendor/tseval-leaderboard/src/*"]`.
-- `app/globals.css`: `@source "../vendor/tseval-leaderboard/src";` so Tailwind keeps the
-  component class names.
-- Copy the chart data into `public/` before build:
-  `"prebuild": "cp vendor/tseval-leaderboard/data/visualization_data.json public/"`.
-- Import and render:
+Run your model in [ModernTSF](https://github.com/Diaugeia/ModernTSF); it emits a
+submission bundle per the **TSF-Core contract** (`submission.json` + `report.md` +
+`trajectory.jsonl`, no weights). Open a PR adding it under `submissions/`. CI
+(`pipeline/validate.py`) checks the contract schema and the ModernTSF binding before
+merge; on merge the board redeploys.
 
-  ```tsx
-  import { Leaderboard, type LeaderboardData } from "@tseval";
-  import data from "vendor/tseval-leaderboard/data/leaderboard.json";
-  // copy = your dictionary's `tseval` slice (structurally a LeaderboardDict)
-  <Leaderboard data={data as unknown as LeaderboardData} copy={copy} />
-  ```
+```bash
+python3 pipeline/validate.py        # schema + ModernTSF-binding check
+```
 
-Clone the host with `--recurse-submodules` (or run `git submodule update --init`); CI
-must enable submodule checkout.
+## Data
 
-## Required host CSS tokens
+`data/leaderboard.json` is the served board. Regression tracks originate from the
+ModernTSF/HF submission pipeline; the air-quality + stock-quant tracks are a curated
+snapshot (their raw backtest inputs are no longer available) and are kept in place
+until replaced by real submissions. Model weights live in the private
+`Diaugeia/TSEval-Weights` repo — never in submissions.
 
-The components use Tailwind utilities backed by these CSS variables (define them in the
-host, light + dark): `--color-paper`, `--color-paper-2`, `--color-surface`,
-`--color-border`, `--color-border-strong`, `--color-ink`, `--color-muted`,
-`--color-faint`, `--color-accent`, `--color-accent-fg`, `--color-accent-soft`.
+## Layout details
 
-Peer deps (provided by the host): `react`, `react-dom`, `next`, `next-themes`, `recharts`.
-
-## Localization
-
-The UI is fully localized through the `LeaderboardDict` object the host passes as `copy`.
-Metric abbreviations (MSE / MAE / Sharpe / Win Rate …) stay English by convention.
-
-## Data provenance
-
-`data/leaderboard.json` and `data/visualization_data.json` are the **single source of
-truth** for the board and are edited here directly.
-
-- **Regression tracks** (time_series / spatiotemporal / air_quality) originated from the
-  HF `Diaugeia/TSEval-Submissions` pipeline.
-- **Stock quant block + the chart series** are a frozen snapshot of an offline backtest;
-  the raw backtest inputs are no longer available, so these are curated in place rather
-  than regenerated.
-
-To update the board, edit the JSON in `data/` (keep the shape in `src/types.ts` /
-`LeaderboardData`) and commit — the host site picks it up by bumping the submodule.
+- UI components in `src/` (`<Leaderboard>`, `quant-visualization`); the app shell in
+  `app/` adds a client-side EN/中文 toggle, theme toggle, and the hero.
+- `lib/dict.ts` carries the en/zh copy; `app/globals.css` the design tokens.
+- `visualization_data.json` is copied into `public/` at dev/build (`sync:data`).
