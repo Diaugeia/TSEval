@@ -1,5 +1,11 @@
 node_modules/
-.DS_Store
+.next/
+/out/
+next-env.d.ts
 *.tsbuildinfo
+.DS_Store
 __pycache__/
 *.pyc
+
+# synced from data/ at dev/build time (sync:data)
+/public/visualization_data.json
