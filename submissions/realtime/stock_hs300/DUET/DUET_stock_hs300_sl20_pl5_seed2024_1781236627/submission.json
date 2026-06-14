@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0.0",
+  "manifest": {
+    "schema_version": "1.0.0",
+    "submission_id": "DUET_stock_hs300_sl20_pl5_seed2024_1781236627",
+    "submitter": "Diaugeia.AI",
+    "track": "realtime",
+    "created_at": "2026-06-14T02:53:09.083223+00:00",
+    "files": [
+      {
+        "path": "trajectory.jsonl",
+        "sha256": "80a3ab169cb36cf6937ef0ff49c739c4170ba5eb2114aad37636edf8fb81e737",
+        "bytes": 236,
+        "role": "trajectory"
+      },
+      {
+        "path": "report.md",
+        "sha256": "dbfdf18e11b5007202f7e782c88cd3742abb4f888bf647f463794a7af3401522",
+        "bytes": 647,
+        "role": "report"
+      }
+    ],
+    "files_sha256": "414ede2ca74a68da0532824ccdfa555e98b8a023c6499cc8b99526aa7d0f2e7e"
+  },
+  "datasets": [
+    {
+      "schema_version": "1.0.0",
+      "id": "stock_hs300",
+      "version": "1.0.0",
+      "sha256": null,
+      "mode": "time_series",
+      "track": "realtime",
+      "freq": "1b",
+      "horizons": [],
+      "num_nodes": null,
+      "num_channels": null,
+      "target": null,
+      "hf_path": "Diaugeia/TSEval-RealTime",
+      "hf_revision": null,
+      "source_config": "configs/datasets/stock_hs300.toml"
+    }
+  ],
+  "records": [
+    {
+      "schema_version": "1.0.0",
+      "record_id": "DUET__stock_hs300__seed2024__pl5",
+      "model": "DUET",
+      "dataset_id": "stock_hs300",
+      "track": "realtime",
+      "mode": "time_series",
+      "seed": 2024,
+      "seeds": [],
+      "results": [
+        {
+          "horizon": 5,
+          "metrics": {
+            "mae": 0.6112432479858398,
+            "mse": 0.7597259283065796,
+            "rmse": 0.87162258363731,
+            "mape": null,
+            "mspe": null,
+            "corr": -0.007623858143128244,
+            "rse": null,
+            "wape": null,
+            "smape": null,
+            "mase": null
+          },
+          "timing": {
+            "fit_time_sec": 317.09641023608856,
+            "inference_time_sec": 3.2789859620388597
+          },
+          "profile": null,
+          "n_windows": null,
+          "run_id": "DUET_stock_hs300_sl20_pl5_seed2024_1781236627"
+        }
+      ],
+      "config": {
+        "mode": "time_series",
+        "seq_len": 20,
+        "label_len": 0,
+        "pred_len": 5,
+        "features": "M",
+        "config_sha256": null,
+        "snapshot": null
+      },
+      "env": {
+        "python": "3.11.15",
+        "torch": "2.11.0+cu128",
+        "cuda": "12.8",
+        "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+        "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.39",
+        "framework_version": "0.3.2",
+        "git_sha": null,
+        "git_dirty": null
+      },
+      "created_at": "2026-06-12T04:02:29.799097+00:00"
+    }
+  ],
+  "trajectories": [
+    {
+      "path": "trajectory.jsonl",
+      "sha256": "80a3ab169cb36cf6937ef0ff49c739c4170ba5eb2114aad37636edf8fb81e737",
+      "synthetic": true,
+      "n_events": 1
+    }
+  ],
+  "reports": [
+    {
+      "path": "report.md",
+      "sha256": "dbfdf18e11b5007202f7e782c88cd3742abb4f888bf647f463794a7af3401522",
+      "format": "md"
+    }
+  ]
+}

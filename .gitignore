@@ -9,3 +9,7 @@ __pycache__/
 
 # synced from data/ at dev/build time (sync:data)
 /public/visualization_data.json
+
+# HF snapshot_download metadata
+/submissions/.cache/
+/submissions/.gitattributes

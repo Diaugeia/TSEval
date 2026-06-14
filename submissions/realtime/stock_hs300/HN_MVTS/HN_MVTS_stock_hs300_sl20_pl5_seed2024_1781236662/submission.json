@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0.0",
+  "manifest": {
+    "schema_version": "1.0.0",
+    "submission_id": "HN_MVTS_stock_hs300_sl20_pl5_seed2024_1781236662",
+    "submitter": "Diaugeia.AI",
+    "track": "realtime",
+    "created_at": "2026-06-14T02:53:09.423020+00:00",
+    "files": [
+      {
+        "path": "trajectory.jsonl",
+        "sha256": "f974092eb87ec55998f0203027583d296232fe5b2f962d1201f614f938ed40c6",
+        "bytes": 239,
+        "role": "trajectory"
+      },
+      {
+        "path": "report.md",
+        "sha256": "1a22a57c0478fc3057432096dd8b56634a564f04e4dd15bab47a7137e4c8cd36",
+        "bytes": 653,
+        "role": "report"
+      }
+    ],
+    "files_sha256": "04a30c6e8f53d967ce3e9900935b802f6a814619bbff2abc5a07b057ca6df2bb"
+  },
+  "datasets": [
+    {
+      "schema_version": "1.0.0",
+      "id": "stock_hs300",
+      "version": "1.0.0",
+      "sha256": null,
+      "mode": "time_series",
+      "track": "realtime",
+      "freq": "1b",
+      "horizons": [],
+      "num_nodes": null,
+      "num_channels": null,
+      "target": null,
+      "hf_path": "Diaugeia/TSEval-RealTime",
+      "hf_revision": null,
+      "source_config": "configs/datasets/stock_hs300.toml"
+    }
+  ],
+  "records": [
+    {
+      "schema_version": "1.0.0",
+      "record_id": "HN_MVTS__stock_hs300__seed2024__pl5",
+      "model": "HN_MVTS",
+      "dataset_id": "stock_hs300",
+      "track": "realtime",
+      "mode": "time_series",
+      "seed": 2024,
+      "seeds": [],
+      "results": [
+        {
+          "horizon": 5,
+          "metrics": {
+            "mae": 0.62436443567276,
+            "mse": 0.7930118441581726,
+            "rmse": 0.8905121246553427,
+            "mape": null,
+            "mspe": null,
+            "corr": -0.04106664119122866,
+            "rse": null,
+            "wape": null,
+            "smape": null,
+            "mase": null
+          },
+          "timing": {
+            "fit_time_sec": 92.84360707993619,
+            "inference_time_sec": 0.48472330207005143
+          },
+          "profile": null,
+          "n_windows": null,
+          "run_id": "HN_MVTS_stock_hs300_sl20_pl5_seed2024_1781236662"
+        }
+      ],
+      "config": {
+        "mode": "time_series",
+        "seq_len": 20,
+        "label_len": 0,
+        "pred_len": 5,
+        "features": "M",
+        "config_sha256": null,
+        "snapshot": null
+      },
+      "env": {
+        "python": "3.11.15",
+        "torch": "2.11.0+cu128",
+        "cuda": "12.8",
+        "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+        "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.39",
+        "framework_version": "0.3.2",
+        "git_sha": null,
+        "git_dirty": null
+      },
+      "created_at": "2026-06-12T03:59:16.283486+00:00"
+    }
+  ],
+  "trajectories": [
+    {
+      "path": "trajectory.jsonl",
+      "sha256": "f974092eb87ec55998f0203027583d296232fe5b2f962d1201f614f938ed40c6",
+      "synthetic": true,
+      "n_events": 1
+    }
+  ],
+  "reports": [
+    {
+      "path": "report.md",
+      "sha256": "1a22a57c0478fc3057432096dd8b56634a564f04e4dd15bab47a7137e4c8cd36",
+      "format": "md"
+    }
+  ]
+}

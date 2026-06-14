@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0.0",
+  "manifest": {
+    "schema_version": "1.0.0",
+    "submission_id": "Fredformer_stock_hs300_sl20_pl5_seed2024_1781236647",
+    "submitter": "Diaugeia.AI",
+    "track": "realtime",
+    "created_at": "2026-06-14T02:53:09.389698+00:00",
+    "files": [
+      {
+        "path": "trajectory.jsonl",
+        "sha256": "51ed9d52898d9137cc4802d93eb8284179a8d8ab121a3f92fa6df3cec37ab418",
+        "bytes": 242,
+        "role": "trajectory"
+      },
+      {
+        "path": "report.md",
+        "sha256": "b8f173d741575cffa82e7e7b8c15fcecd60985052d0b787c2cf56e3b1df2d0aa",
+        "bytes": 659,
+        "role": "report"
+      }
+    ],
+    "files_sha256": "3c46910e126021ff0417d343b0fb8de773101fb2085e82acd875fad95cbd17bc"
+  },
+  "datasets": [
+    {
+      "schema_version": "1.0.0",
+      "id": "stock_hs300",
+      "version": "1.0.0",
+      "sha256": null,
+      "mode": "time_series",
+      "track": "realtime",
+      "freq": "1b",
+      "horizons": [],
+      "num_nodes": null,
+      "num_channels": null,
+      "target": null,
+      "hf_path": "Diaugeia/TSEval-RealTime",
+      "hf_revision": null,
+      "source_config": "configs/datasets/stock_hs300.toml"
+    }
+  ],
+  "records": [
+    {
+      "schema_version": "1.0.0",
+      "record_id": "Fredformer__stock_hs300__seed2024__pl5",
+      "model": "Fredformer",
+      "dataset_id": "stock_hs300",
+      "track": "realtime",
+      "mode": "time_series",
+      "seed": 2024,
+      "seeds": [],
+      "results": [
+        {
+          "horizon": 5,
+          "metrics": {
+            "mae": 0.618714451789856,
+            "mse": 0.7815102338790894,
+            "rmse": 0.8840306747387725,
+            "mape": null,
+            "mspe": null,
+            "corr": -0.028863851363771877,
+            "rse": null,
+            "wape": null,
+            "smape": null,
+            "mase": null
+          },
+          "timing": {
+            "fit_time_sec": 103.59363253996707,
+            "inference_time_sec": 0.5713691909331828
+          },
+          "profile": null,
+          "n_windows": null,
+          "run_id": "Fredformer_stock_hs300_sl20_pl5_seed2024_1781236647"
+        }
+      ],
+      "config": {
+        "mode": "time_series",
+        "seq_len": 20,
+        "label_len": 0,
+        "pred_len": 5,
+        "features": "M",
+        "config_sha256": null,
+        "snapshot": null
+      },
+      "env": {
+        "python": "3.11.15",
+        "torch": "2.11.0+cu128",
+        "cuda": "12.8",
+        "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+        "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.39",
+        "framework_version": "0.3.2",
+        "git_sha": null,
+        "git_dirty": null
+      },
+      "created_at": "2026-06-12T03:59:11.931895+00:00"
+    }
+  ],
+  "trajectories": [
+    {
+      "path": "trajectory.jsonl",
+      "sha256": "51ed9d52898d9137cc4802d93eb8284179a8d8ab121a3f92fa6df3cec37ab418",
+      "synthetic": true,
+      "n_events": 1
+    }
+  ],
+  "reports": [
+    {
+      "path": "report.md",
+      "sha256": "b8f173d741575cffa82e7e7b8c15fcecd60985052d0b787c2cf56e3b1df2d0aa",
+      "format": "md"
+    }
+  ]
+}
