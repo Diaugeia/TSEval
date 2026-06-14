@@ -1,7 +1,7 @@
 # @diaugeia/tseval-leaderboard
 
-The **TS-Eval leaderboard** — UI components, leaderboard data, and the data-generation
-pipeline. Extracted from the Diaugeia website so it can evolve independently.
+The **TS-Eval leaderboard** — UI components and the leaderboard data (single source
+of truth). Extracted from the Diaugeia website so it can evolve independently.
 
 Consumed by [`Diaugeia/HomePageSourceCode`](https://github.com/Diaugeia/HomePageSourceCode)
 as a **git submodule** at `vendor/tseval-leaderboard`, compiled as source by the host's
@@ -16,11 +16,8 @@ src/
   types.ts                 # LeaderboardDict (i18n shape) + re-exports
   index.ts                 # public entry: Leaderboard, LeaderboardData, LeaderboardDict
 data/
-  leaderboard.json         # the board (regenerated from HF Diaugeia/TSEval-Submissions)
+  leaderboard.json         # the board — single source of truth (curated snapshot)
   visualization_data.json  # cumulative/log-return series for the chart
-scripts/
-  generate_tseval_json.py  # build leaderboard.json from submissions
-  merge_quant_data.py      # merge quant backtest results into the board
 ```
 
 ## Host integration (git submodule)
@@ -63,9 +60,16 @@ Peer deps (provided by the host): `react`, `react-dom`, `next`, `next-themes`, `
 The UI is fully localized through the `LeaderboardDict` object the host passes as `copy`.
 Metric abbreviations (MSE / MAE / Sharpe / Win Rate …) stay English by convention.
 
-## Data regeneration
+## Data provenance
 
-```bash
-python scripts/generate_tseval_json.py   # HF submissions -> data/leaderboard.json
-python scripts/merge_quant_data.py        # + quant backtest columns
-```
+`data/leaderboard.json` and `data/visualization_data.json` are the **single source of
+truth** for the board and are edited here directly.
+
+- **Regression tracks** (time_series / spatiotemporal / air_quality) originated from the
+  HF `Diaugeia/TSEval-Submissions` pipeline.
+- **Stock quant block + the chart series** are a frozen snapshot of an offline backtest;
+  the raw backtest inputs are no longer available, so these are curated in place rather
+  than regenerated.
+
+To update the board, edit the JSON in `data/` (keep the shape in `src/types.ts` /
+`LeaderboardData`) and commit — the host site picks it up by bumping the submodule.

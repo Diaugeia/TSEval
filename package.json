@@ -2,7 +2,7 @@
   "name": "@diaugeia/tseval-leaderboard",
   "version": "1.2.2",
   "private": true,
-  "description": "TS-Eval leaderboard UI (air-quality + stock quant) + data + generation pipeline. Consumed as source via git submodule.",
+  "description": "TS-Eval leaderboard UI (air-quality + stock quant) + data (single source of truth). Consumed as source via git submodule.",
   "type": "module",
   "license": "MIT",
   "exports": {
