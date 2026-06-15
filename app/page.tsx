@@ -68,7 +68,7 @@ export default function Page() {
       {/* Leaderboard */}
       <section className="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
         <Suspense fallback={null}>
-          <Leaderboard data={data} copy={copy} />
+          <Leaderboard data={data} copy={copy} locale={locale} />
         </Suspense>
       </section>
 

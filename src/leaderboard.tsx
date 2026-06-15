@@ -15,7 +15,7 @@ export type { LeaderboardData, LeaderRow } from "./lib/leaderboard-data";
 const STATIC_TRACKS = ["time_series", "spatiotemporal", "covariate"];
 const REALTIME_TRACKS = ["stock", "traffic", "air_quality"];
 
-export function Leaderboard({ data, copy }: { data: LeaderboardData; copy: LeaderboardDict }) {
+export function Leaderboard({ data, copy, locale = "en" }: { data: LeaderboardData; copy: LeaderboardDict; locale?: "en" | "zh" }) {
   // Visualization data (stock trends) is fetched client-side from /public.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [visualizationData, setVisualizationData] = useState<any>(null);
@@ -161,6 +161,7 @@ export function Leaderboard({ data, copy }: { data: LeaderboardData; copy: Leade
               query={query}
               hideTitle
               view={view}
+              locale={locale}
               visualizationData={visualizationData}
             />
           )}
@@ -168,7 +169,7 @@ export function Leaderboard({ data, copy }: { data: LeaderboardData; copy: Leade
       ) : (
         <div className="mt-6 space-y-6">
           {datasets.map(([name, ds]) => (
-            <DatasetCard key={`${track}/${name}`} track={track} name={name} ds={ds} copy={copy} query={query} />
+            <DatasetCard key={`${track}/${name}`} track={track} name={name} ds={ds} copy={copy} query={query} locale={locale} />
           ))}
         </div>
       )}

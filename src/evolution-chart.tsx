@@ -110,10 +110,13 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
   const toItem = (p: Point) => ({ value: [p.jx, p.mse], name: p.model, venue: p.venue, year: p.year, mse: p.mse });
 
   const option = useMemo(() => {
-    const { all, frontier, cap, floor, dataMax, hasPre, minX, maxX } = model;
+    const { all, frontier, cap, floor, hasPre, minX, maxX } = model;
     const rest = all.filter((p) => !p.isTop).map(toItem);
     const top = all.filter((p) => p.isTop).map(toItem);
-    const yLo = Math.max(0, floor - (cap - floor) * 0.06);
+    // Both scales frame the competitive band (cap excludes divergent baselines) so
+    // the dense low cluster gets the height instead of being squeezed under the
+    // outliers. Log additionally widens the spacing of the low end.
+    const linLo = Math.max(0, floor - (cap - floor) * 0.06);
 
     return {
       animationDuration: 600,
@@ -125,8 +128,8 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
         backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
         borderColor: grid,
         borderWidth: 1,
-        padding: [6, 10],
-        textStyle: { color: ink, fontSize: 12 },
+        padding: [7, 11],
+        textStyle: { color: ink, fontSize: 13, fontWeight: 500 },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         formatter: (p: any) => {
           const d = p.data || {};
@@ -141,14 +144,15 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
         interval: 1,
         name: copy.overview.xAxis,
         nameLocation: "middle",
-        nameGap: 28,
-        nameTextStyle: { color: axis, fontSize: 12 },
+        nameGap: 30,
+        nameTextStyle: { color: axis, fontSize: 13, fontWeight: 600 },
         axisLine: { lineStyle: { color: grid } },
         axisTick: { show: false },
         splitLine: { show: true, lineStyle: { color: grid, type: "dashed" } },
         axisLabel: {
           color: axis,
-          fontSize: 12,
+          fontSize: 13,
+          fontWeight: 500,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           formatter: (v: any) => {
             const n = Number(v);
@@ -162,13 +166,15 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
         name: "MSE",
         nameLocation: "end",
         nameGap: 10,
-        nameTextStyle: { color: axis, fontSize: 12, align: "left" },
-        ...(isLog ? { min: Number((floor * 0.9).toPrecision(2)), max: Number(dataMax.toPrecision(3)) } : { min: yLo, max: cap }),
+        nameTextStyle: { color: axis, fontSize: 13, fontWeight: 600, align: "left" },
+        ...(isLog
+          ? { min: Number((floor * 0.92).toPrecision(2)), max: Number(cap.toPrecision(3)) }
+          : { min: linLo, max: cap }),
         axisLine: { lineStyle: { color: grid } },
         axisTick: { show: false },
         splitLine: { show: true, lineStyle: { color: grid, type: "dashed" } },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        axisLabel: { color: axis, fontSize: 12, formatter: (v: any) => Number(v).toFixed(2) },
+        axisLabel: { color: axis, fontSize: 13, fontWeight: 500, formatter: (v: any) => Number(v).toFixed(2) },
       },
       series: [
         {
@@ -188,10 +194,10 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
           symbolSize: 9,
           itemStyle: { color: dim, opacity: 0.7 },
           emphasis: {
-            scale: 2,
+            scale: 2.2,
             itemStyle: { opacity: 1 },
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            label: { show: true, formatter: (p: any) => p.data.name, position: "top", color: ink, fontSize: 11, fontWeight: 600 },
+            label: { show: true, formatter: (p: any) => p.data.name, position: "top", color: ink, fontSize: 13, fontWeight: 700 },
           },
           z: 2,
         },
@@ -202,8 +208,8 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
           symbolSize: 12,
           itemStyle: { color: gold },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          label: { show: true, formatter: (p: any) => p.data.name, position: "top", color: axis, fontSize: 10 },
-          emphasis: { scale: 1.5, label: { show: true, color: ink, fontSize: 12, fontWeight: 600 } },
+          label: { show: true, formatter: (p: any) => p.data.name, position: "top", color: ink, fontSize: 12, fontWeight: 600 },
+          emphasis: { scale: 1.6, label: { show: true, color: ink, fontSize: 13, fontWeight: 700 } },
           z: 3,
         },
       ],

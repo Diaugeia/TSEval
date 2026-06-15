@@ -13,18 +13,16 @@ type Props = {
   sortDir: number;
   onSort: (k: SortKey) => void;
   copy: LeaderboardDict;
+  // Chinese convention flips gain/loss colours (red = up, green = down).
+  redIsUp?: boolean;
 };
 
-const isRealtime = (track: string) =>
-  track === "stock" || track === "traffic" || track === "air_quality";
-
-export function ResultsTable({ rows, track, view, sortKey, sortDir, onSort, copy }: Props) {
+export function ResultsTable({ rows, track, view, sortKey, sortDir, onSort, copy, redIsUp = false }: Props) {
   if (rows.length === 0) {
     return <p className="px-5 py-12 text-center text-sm text-muted">{copy.noMatch}</p>;
   }
 
   const isQuant = track === "stock" && view === "quant";
-  const showCat = isRealtime(track);
   const showTsCols = track === "time_series";
 
   // Bar width = min–max normalised magnitude of the active sort metric across
@@ -45,11 +43,6 @@ export function ResultsTable({ rows, track, view, sortKey, sortDir, onSort, copy
             <Th className="w-12" title={copy.quant.rankTip}>
               #
             </Th>
-            {showCat && (
-              <Th className="w-12 text-accent" title={copy.quant.catRankTip}>
-                #Cat
-              </Th>
-            )}
             <Th>{copy.cols.model}</Th>
 
             {isQuant ? (
@@ -113,17 +106,6 @@ export function ResultsTable({ rows, track, view, sortKey, sortDir, onSort, copy
                 <td className="px-5 py-2.5">
                   {r.displayRank ? <RankBadge rank={r.displayRank} /> : <span className="text-sm text-muted">—</span>}
                 </td>
-                {showCat && (
-                  <td className="px-5 py-2.5">
-                    {r.categoryRank ? (
-                      <span className="text-sm font-medium text-accent [font-variant-numeric:tabular-nums]">
-                        {r.categoryRank}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted">—</span>
-                    )}
-                  </td>
-                )}
                 <td className="px-5 py-2.5 text-sm font-semibold">
                   <span className={isBaseline ? "text-accent" : "text-ink"}>{displayName}</span>
                   {isBaseline && (
@@ -134,7 +116,7 @@ export function ResultsTable({ rows, track, view, sortKey, sortDir, onSort, copy
                 </td>
 
                 {isQuant
-                  ? QUANT_METRICS.map((m) => dataCell(m.key, QUANT_FORMAT[m.key](r[m.key]), quantColor(m.key, r[m.key])))
+                  ? QUANT_METRICS.map((m) => dataCell(m.key, QUANT_FORMAT[m.key](r[m.key]), quantColor(m.key, r[m.key], redIsUp)))
                   : [
                       dataCell("mse", fmt(r.mse), sortKey === "mse" ? "text-accent" : "text-muted"),
                       dataCell("mae", fmt(r.mae), sortKey === "mae" ? "text-accent" : "text-muted"),

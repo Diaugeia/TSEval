@@ -48,13 +48,16 @@ export const QUANT_FORMAT: Record<string, (v: number | null | undefined) => stri
   avg_turnover: fmtRatio,
 };
 
-// Financial colour semantics: green = gain, red = loss. Applied to the
-// return/Sharpe columns; drawdown reads red (always a loss); win-rate splits
-// at 50%; turnover stays neutral.
-export function quantColor(key: string, v: number | null | undefined): string {
+// Financial colour semantics. Gain vs loss colours depend on convention:
+// Western (redIsUp=false) → green = gain, red = loss; Chinese (redIsUp=true) →
+// red = gain (涨), green = loss (跌). Applied to the return/Sharpe columns;
+// drawdown reads as a loss; win-rate splits at 50%; turnover stays neutral.
+export function quantColor(key: string, v: number | null | undefined, redIsUp = false): string {
   if (v === null || v === undefined) return "text-muted";
-  const up = "text-emerald-600 dark:text-emerald-400";
-  const down = "text-rose-600 dark:text-rose-400";
+  const green = "text-emerald-600 dark:text-emerald-400";
+  const red = "text-rose-600 dark:text-rose-400";
+  const up = redIsUp ? red : green; // gain
+  const down = redIsUp ? green : red; // loss
   switch (key) {
     case "total_return":
     case "annualized_return":

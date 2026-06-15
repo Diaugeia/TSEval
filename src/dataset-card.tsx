@@ -9,9 +9,6 @@ import { Seg } from "./ui/seg";
 import { ResultsTable } from "./results-table";
 import { QuantVisualization, TradingStrategyDescription } from "./quant-visualization";
 
-const isRealtime = (track: string) =>
-  track === "stock" || track === "traffic" || track === "air_quality";
-
 export function DatasetCard({
   track,
   name,
@@ -20,6 +17,7 @@ export function DatasetCard({
   query,
   hideTitle = false,
   view: viewProp,
+  locale = "en",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   visualizationData,
 }: {
@@ -30,6 +28,7 @@ export function DatasetCard({
   query: string;
   hideTitle?: boolean;
   view?: "regression" | "quant";
+  locale?: "en" | "zh";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   visualizationData?: any;
 }) {
@@ -111,13 +110,6 @@ export function DatasetCard({
       return true;
     });
 
-    // #Cat: sequential rank within the currently displayed table (real-time tracks).
-    if (isRealtime(track)) {
-      let catRank = 0;
-      typeFiltered.forEach((row) => {
-        row.categoryRank = row.modelType === "baseline" ? undefined : ++catRank;
-      });
-    }
     return typeFiltered;
   }, [all, query, sortKey, sortDir, showTimeSeries, showSpatiotemporal, showAirQuality, track]);
 
@@ -217,7 +209,16 @@ export function DatasetCard({
         <QuantVisualization data={visualizationData} availableModels={STOCK_VIZ_MODELS} view={view} copy={copy} />
       )}
 
-      <ResultsTable rows={rows} track={track} view={view} sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} copy={copy} />
+      <ResultsTable
+        rows={rows}
+        track={track}
+        view={view}
+        sortKey={sortKey}
+        sortDir={sortDir}
+        onSort={toggleSort}
+        copy={copy}
+        redIsUp={locale === "zh"}
+      />
 
       {track === "stock" && view === "quant" && <TradingStrategyDescription copy={copy} />}
     </div>
