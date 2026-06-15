@@ -117,6 +117,17 @@ button,
   border-radius: 2px;
 }
 
+/* Charts (recharts SVG surfaces, echarts canvas) grab focus on click and would
+   otherwise show the browser's default blue focus box. Suppress it — these are
+   data marks, not interactive controls that need a focus ring. */
+.recharts-wrapper:focus,
+.recharts-wrapper :focus,
+.recharts-surface:focus,
+.echarts-for-react:focus,
+.echarts-for-react :focus {
+  outline: none;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Prose — typography for rendered MDX articles                       */
 /* ------------------------------------------------------------------ */

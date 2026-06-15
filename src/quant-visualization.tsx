@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useTheme } from "next-themes";
 import type { LeaderboardDict } from "./types";
-import { Seg } from "./leaderboard";
+import { Seg } from "./ui/seg";
 import {
   LineChart,
   Line,
