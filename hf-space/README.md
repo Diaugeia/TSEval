@@ -1,5 +1,5 @@
 ---
-title: TS-Eval
+title: TSEval
 emoji: "📈"
 colorFrom: gray
 colorTo: yellow
@@ -8,7 +8,7 @@ pinned: false
 license: mit
 ---
 
-# TS-Eval — Time-Series Forecasting Leaderboard
+# TSEval — Time-Series Forecasting Leaderboard
 
 Built by [Diaugeia](https://diaugeia.ai). Source + submissions:
 [github.com/Diaugeia/TSEval](https://github.com/Diaugeia/TSEval).

@@ -19,7 +19,7 @@ const notoSerifSC = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
-  title: "TS-Eval — Time-Series Forecasting Leaderboard · Diaugeia",
+  title: "TSEval — Time-Series Forecasting Leaderboard · Diaugeia",
   description:
     "An open, reproducible leaderboard for time-series forecasting — community submissions ranked across tracks, datasets, and horizons.",
 };

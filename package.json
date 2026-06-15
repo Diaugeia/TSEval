@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "description": "TS-Eval leaderboard — standalone static site (UI + data + submission pipeline). Deployed to HF Space + Cloudflare.",
+  "description": "TSEval leaderboard — standalone static site (UI + data + submission pipeline). Deployed to HF Space + Cloudflare.",
   "scripts": {
     "sync:data": "mkdir -p public && cp data/visualization_data.json public/visualization_data.json",
     "leaderboard": "python3 pipeline/build_leaderboard.py",
