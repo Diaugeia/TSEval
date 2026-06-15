@@ -70,4 +70,10 @@ export interface LeaderboardDict {
     disclaimerLabel: string;
     disclaimer: string;
   };
+  overview: {
+    title: string;
+    caption: string;
+    dataset: string;
+    metric: string;
+  };
 }

@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import type { LeaderboardDict } from "./types";
 import { QuantVisualization, TradingStrategyDescription } from "./quant-visualization";
+import { OverviewChart } from "./overview-chart";
 
 // ---------------------------------------------------------------------------
 //  Model type classification based on work_dirs structure
@@ -249,8 +250,11 @@ export function Leaderboard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, track, view, selectedStockDataset]);
 
-  // Get tracks for current category
-  const currentTracks = category === 'static' ? staticTracks : realtimeTracks;
+  // Get tracks for current category, ordering populated tracks first so empty
+  // ones (e.g. traffic) sink to the end. Stable sort keeps the declared order.
+  const currentTracks = (category === 'static' ? staticTracks : realtimeTracks)
+    .slice()
+    .sort((a, b) => Number(trackHasData(b)) - Number(trackHasData(a)));
 
   const current = data.tracks[track];
   const datasets = current ? Object.entries(current.datasets) : [];
@@ -340,6 +344,13 @@ export function Leaderboard({
         </div>
       )}
 
+      {/* Overview chart at the top of the static section (before the tables) */}
+      {category === 'static' && current && datasets.length > 0 && (
+        <div className="mt-6">
+          <OverviewChart datasets={current.datasets} copy={copy} />
+        </div>
+      )}
+
       {datasets.length === 0 ? (
         <p className="mt-10 rounded-2xl border border-border bg-surface px-6 py-16 text-center text-muted">
           {copy.emptyTrack}
@@ -378,6 +389,9 @@ export function Leaderboard({
     </>
   );
 }
+
+// Models selectable in the stock-track trends chart.
+const STOCK_VIZ_MODELS = ['AGCRN', 'AMRC', 'APN', 'Amplifier', 'Aurora', 'Autoformer', 'BiMamba', 'BiST', 'BigST', 'CARD', 'CATS', 'CMoS', 'COSA', 'CoRA', 'CrossGNN', 'CrossLinear', 'Crossformer', 'CycleNet', 'D2STGNN', 'DCRNN', 'DFDGCN', 'DGCRN', 'DLinear', 'DSFormer', 'DSTAGNN', 'DTAF', 'DUET', 'DeepAR', 'DistDF', 'DynamicTMoE', 'ETSformer', 'FEDformer', 'FITS', 'FTP', 'FeTS', 'FiLM', 'FreTS', 'Fredformer', 'GOTSF', 'GTR', 'GTS', 'GWNet', 'HDMixer', 'HL', 'HMformer', 'HN_MVTS', 'HimNet', 'ImplicitForecaster', 'Informer', 'InterPDN', 'Koopa', 'Kronos', 'LSTM', 'LatentTSF', 'LightTS', 'Linear', 'MAFS', 'MAGE', 'MICN', 'MMPD', 'MSGNet', 'MTGNN', 'MTSMixer', 'MambaSimple', 'MixLinear', 'MoFo', 'ModernTCN', 'MultiPatchFormer', 'NBeats', 'NHiTS', 'NLinear', 'NSTransformer', 'OLinear', 'OccamVTS', 'PAttn', 'PHAT', 'PMDformer', 'PULSE', 'PWS', 'PaiFilter', 'PatchMLP', 'PatchTST', 'Pathformer', 'PhaseFormer', 'Pyraformer', 'RLinear', 'RPMixer', 'Reformer', 'S4', 'SCINet', 'SEMPO', 'SOFTS', 'SRSNet', 'STAEformer', 'STDN', 'STGCN', 'STGODE', 'STID', 'STNorm', 'STOP', 'STPGNN', 'STTN', 'STWave', 'SVTime', 'S_Mamba', 'SegRNN', 'Sonnet', 'SparseTSF', 'StemGNN', 'Sumba', 'SymTime', 'TSMixer', 'TSRAG', 'TexFilter', 'TiDE', 'TiRex', 'TimeAlign', 'TimeBase', 'TimeBridge', 'TimeCAP', 'TimeEmb', 'TimeFilter', 'TimeKAN', 'TimeMixer', 'TimeMosaic', 'TimeO1', 'TimePerceiver', 'TimeXer', 'TimesNet', 'Transformer', 'UMixer', 'WPMixer', 'WaveNet', 'iTransformer', 'xPatch'];
 
 function DatasetCard({
   track,
@@ -670,6 +684,16 @@ function DatasetCard({
         </div>
       )}
 
+      {/* Trends chart at the top for the stock track (above the table) */}
+      {track === 'stock' && visualizationData && (
+        <QuantVisualization
+          data={visualizationData}
+          availableModels={STOCK_VIZ_MODELS}
+          view={view}
+          copy={copy}
+        />
+      )}
+
       {rows.length === 0 ? (
         <p className="px-5 py-12 text-center text-sm text-muted">
           {copy.noMatch}
@@ -901,20 +925,8 @@ function DatasetCard({
         </div>
       )}
       
-      {/* Visualization component for stock track - show in both regression and quant views */}
-      {track === 'stock' && visualizationData && (
-        <>
-          <QuantVisualization
-            data={visualizationData}
-            availableModels={['AGCRN', 'AMRC', 'APN', 'Amplifier', 'Aurora', 'Autoformer', 'BiMamba', 'BiST', 'BigST', 'CARD', 'CATS', 'CMoS', 'COSA', 'CoRA', 'CrossGNN', 'CrossLinear', 'Crossformer', 'CycleNet', 'D2STGNN', 'DCRNN', 'DFDGCN', 'DGCRN', 'DLinear', 'DSFormer', 'DSTAGNN', 'DTAF', 'DUET', 'DeepAR', 'DistDF', 'DynamicTMoE', 'ETSformer', 'FEDformer', 'FITS', 'FTP', 'FeTS', 'FiLM', 'FreTS', 'Fredformer', 'GOTSF', 'GTR', 'GTS', 'GWNet', 'HDMixer', 'HL', 'HMformer', 'HN_MVTS', 'HimNet', 'ImplicitForecaster', 'Informer', 'InterPDN', 'Koopa', 'Kronos', 'LSTM', 'LatentTSF', 'LightTS', 'Linear', 'MAFS', 'MAGE', 'MICN', 'MMPD', 'MSGNet', 'MTGNN', 'MTSMixer', 'MambaSimple', 'MixLinear', 'MoFo', 'ModernTCN', 'MultiPatchFormer', 'NBeats', 'NHiTS', 'NLinear', 'NSTransformer', 'OLinear', 'OccamVTS', 'PAttn', 'PHAT', 'PMDformer', 'PULSE', 'PWS', 'PaiFilter', 'PatchMLP', 'PatchTST', 'Pathformer', 'PhaseFormer', 'Pyraformer', 'RLinear', 'RPMixer', 'Reformer', 'S4', 'SCINet', 'SEMPO', 'SOFTS', 'SRSNet', 'STAEformer', 'STDN', 'STGCN', 'STGODE', 'STID', 'STNorm', 'STOP', 'STPGNN', 'STTN', 'STWave', 'SVTime', 'S_Mamba', 'SegRNN', 'Sonnet', 'SparseTSF', 'StemGNN', 'Sumba', 'SymTime', 'TSMixer', 'TSRAG', 'TexFilter', 'TiDE', 'TiRex', 'TimeAlign', 'TimeBase', 'TimeBridge', 'TimeCAP', 'TimeEmb', 'TimeFilter', 'TimeKAN', 'TimeMixer', 'TimeMosaic', 'TimeO1', 'TimePerceiver', 'TimeXer', 'TimesNet', 'Transformer', 'UMixer', 'WPMixer', 'WaveNet', 'iTransformer', 'xPatch']}
-            view={view}
-            copy={copy}
-          />
-
-          {/* Trading strategy description - only show in Quant view */}
-          {view === 'quant' && <TradingStrategyDescription copy={copy} />}
-        </>
-      )}
+      {/* Trading strategy description below the table — only in Quant view */}
+      {track === 'stock' && view === 'quant' && <TradingStrategyDescription copy={copy} />}
     </div>
   );
 }
