@@ -20,6 +20,9 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
+      - name: Rebuild leaderboard from submissions
+        run: python3 pipeline/build_leaderboard.py   # validate → aggregate → data/leaderboard.json
+
       - name: Install & build static site
         run: |
           bun install --frozen-lockfile

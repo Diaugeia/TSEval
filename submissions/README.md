@@ -29,11 +29,16 @@ leaderboard from. Model weights live separately in [`Diaugeia/TSEval-Weights`](h
 ## How the leaderboard is built
 
 ```bash
-uv run python tool/tsf.py leaderboard-build --source . --out leaderboard.json
+python pipeline/build_leaderboard.py            # validate → aggregate → write data/leaderboard.json
+python pipeline/build_leaderboard.py --no-write # dry-run summary
 ```
 
-Deterministic, `tsf_core` + stdlib only (no torch). Each bundle is checked (result + trajectory present, schema-valid),
-then collated and ranked per `(track, dataset, horizon)` by MSE. See `Diaugeia/ModernTSF` `docs/*/tseval-submit.md`.
+Stdlib-only (no torch). Every `submission.json` is schema-validated (`pipeline/validate.py`),
+then rows are aggregated per `(track, dataset, horizon, model)` — metrics **averaged across
+runs/seeds** with `n_runs` + `<metric>_std` — and ranked by MSE. Blocks with no raw submissions
+yet (air-quality, the stock *quant* view) are preserved as a curated overlay.
+
+**See [`SUBMITTING.md`](../SUBMITTING.md) for the full submission format + multi-seed averaging rules.**
 
 ## Current contents
 
