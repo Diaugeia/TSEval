@@ -80,7 +80,8 @@ export default function Page() {
           </span>
           <span className="flex gap-4">
             <a className="hover:text-ink" href="https://github.com/Diaugeia/tseval-leaderboard">GitHub</a>
-            <a className="hover:text-ink" href="https://github.com/Diaugeia/tseval-leaderboard/tree/main/submissions">Submissions</a>
+            <a className="hover:text-ink" href="https://github.com/Diaugeia/tseval-leaderboard/blob/main/SUBMITTING.md">Submit</a>
+            <a className="hover:text-ink" href="https://huggingface.co/datasets/Diaugeia/TSEval-Static">Datasets</a>
           </span>
         </div>
       </footer>
