@@ -11,11 +11,15 @@ export const METRICS = [
   { key: "corr", betterDir: -1 },
 ] as const;
 
+// betterDir is the sort direction that puts the BEST value first: 1 = ascending
+// (lower is better), -1 = descending (higher is better). For quant: returns /
+// Sharpe / win-rate are higher-better; max drawdown is reported negative, so a
+// value closer to 0 (higher) is better; turnover is lower-better.
 export const QUANT_METRICS = [
   { key: "total_return", label: "Total Return", betterDir: -1 },
   { key: "annualized_return", label: "Annualized", betterDir: -1 },
   { key: "sharpe", label: "Sharpe", betterDir: -1 },
-  { key: "max_drawdown", label: "Max DD", betterDir: 1 },
+  { key: "max_drawdown", label: "Max DD", betterDir: -1 },
   { key: "win_rate", label: "Win Rate", betterDir: -1 },
   { key: "avg_turnover", label: "Avg Turnover", betterDir: 1 },
 ] as const;
@@ -23,6 +27,15 @@ export const QUANT_METRICS = [
 export type SortKey =
   | (typeof METRICS)[number]["key"]
   | (typeof QUANT_METRICS)[number]["key"];
+
+// Best-first sort direction for any metric key, across both metric sets.
+export function betterDirOf(key: string): number {
+  return (
+    (METRICS as readonly { key: string; betterDir: number }[]).find((m) => m.key === key)?.betterDir ??
+    (QUANT_METRICS as readonly { key: string; betterDir: number }[]).find((m) => m.key === key)?.betterDir ??
+    1
+  );
+}
 
 export function fmt(v: number | null | undefined): string {
   return v === null || v === undefined ? "—" : v.toFixed(4);

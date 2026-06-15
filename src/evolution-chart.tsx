@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { Seg } from "./ui/seg";
+import { orderDatasets } from "./lib/datasets";
 import type { LeaderboardDict } from "./types";
 import modelMeta from "@/data/model-meta.json";
 
@@ -42,7 +43,7 @@ const metaLookup = (() => {
  * hover-to-enlarge + name, and a gold best-so-far (SOTA) frontier line.
  */
 export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: LeaderboardDict }) {
-  const names = Object.keys(datasets);
+  const names = orderDatasets(Object.keys(datasets));
   const [dataset, setDataset] = useState(names[0]);
   const [yScale, setYScale] = useState<"linear" | "log">("linear");
   const [selected, setSelected] = useState<Point | null>(null);

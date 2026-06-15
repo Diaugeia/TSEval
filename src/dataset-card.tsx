@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import type { LeaderboardDict } from "./types";
 import type { DatasetBlock } from "./lib/leaderboard-data";
 import { getModelType, STOCK_VIZ_MODELS } from "./lib/model-types";
-import { METRICS, QUANT_METRICS, formatPollutant, type SortKey } from "./lib/metrics";
+import { formatPollutant, betterDirOf, type SortKey } from "./lib/metrics";
 import { Seg } from "./ui/seg";
 import { ResultsTable } from "./results-table";
 import { QuantVisualization, TradingStrategyDescription } from "./quant-visualization";
@@ -43,7 +43,8 @@ export function DatasetCard({
 
   const defaultSortKey = (view === "quant" ? "total_return" : "mse") as SortKey;
   const [sortKey, setSortKey] = useState<SortKey>(defaultSortKey);
-  const [sortDir, setSortDir] = useState(1); // 1 = ascending
+  // Start "best-first" for the default metric (e.g. quant → highest Total Return on top).
+  const [sortDir, setSortDir] = useState(() => betterDirOf(defaultSortKey));
   const [quantConfig, setQuantConfig] = useState<"conservative" | "balanced" | "aggressive">("conservative");
 
   // Model type filter — at least one must stay selected.
@@ -61,11 +62,10 @@ export function DatasetCard({
   };
 
   function toggleSort(k: SortKey) {
-    const better = METRICS.find((m) => m.key === k)?.betterDir ?? 1;
     if (k === sortKey) setSortDir((d) => -d);
     else {
       setSortKey(k);
-      setSortDir(better); // start "best-first" for the chosen metric
+      setSortDir(betterDirOf(k)); // start "best-first" for the chosen metric
     }
   }
 
@@ -91,8 +91,7 @@ export function DatasetCard({
       return (av - bv) * sortDir;
     });
 
-    const betterDir = METRICS.find((m) => m.key === sortKey)?.betterDir ?? 1;
-    const isNaturalOrder = sortDir === betterDir;
+    const isNaturalOrder = sortDir === betterDirOf(sortKey);
 
     // Ranks for non-baseline models only (baseline shows "—" and doesn't shift others).
     let rankCounter = 0;

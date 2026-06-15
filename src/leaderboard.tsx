@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import type { LeaderboardDict } from "./types";
 import type { LeaderboardData } from "./lib/leaderboard-data";
 import { Seg } from "./ui/seg";
+import { datasetRank } from "./lib/datasets";
 import { EvolutionChart } from "./evolution-chart";
 import { DatasetCard } from "./dataset-card";
 
@@ -76,7 +77,9 @@ export function Leaderboard({ data, copy, locale = "en" }: { data: LeaderboardDa
     .sort((a, b) => Number(trackHasData(b)) - Number(trackHasData(a)));
 
   const current = data.tracks[track];
-  const datasets = current ? Object.entries(current.datasets) : [];
+  const datasets = current
+    ? Object.entries(current.datasets).sort(([a], [b]) => datasetRank(a) - datasetRank(b) || a.localeCompare(b))
+    : [];
 
   const pickTrack = (cat: "static" | "realtime") => {
     const tracks = cat === "static" ? STATIC_TRACKS : REALTIME_TRACKS;
