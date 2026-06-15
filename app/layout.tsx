@@ -21,7 +21,7 @@ const notoSerifSC = Noto_Serif_SC({
 export const metadata: Metadata = {
   title: "TSEval — Time-Series Forecasting Leaderboard · Diaugeia",
   description:
-    "An open, reproducible leaderboard for time-series forecasting — community submissions ranked across tracks, datasets, and horizons.",
+    "An open, transparent leaderboard for time-series forecasting — covering static and real-time evaluation, with community submissions categorized and ranked across tracks, datasets, and horizons.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
