@@ -1,77 +1,96 @@
-# TSEval
+<div align="center">
 
-**An open, reproducible leaderboard for time-series forecasting.** Every entry is a
-community submission — one agent trajectory and one verified result — ranked
-transparently across tracks, datasets, and horizons.
+# 📊 TSEval
 
-🔗 **Live:** **[tseval.diaugeia.ai](https://tseval.diaugeia.ai)**
-&nbsp;·&nbsp; Mirror: [Hugging Face Space](https://huggingface.co/spaces/Diaugeia/TSEval)
+**Open, reproducible time-series forecasting leaderboard**
 
-This repository is the **single source of truth** for TSEval: the website, the
-community submission store, and the build pipeline that turns submissions into the
-ranked board. Push a submission → CI validates, aggregates, and redeploys.
+[![Live](https://img.shields.io/badge/live-tseval.diaugeia.ai-8c6f24.svg)](https://tseval.diaugeia.ai)
+[![🤗 Space](https://img.shields.io/badge/🤗%20Space-Diaugeia/TSEval-yellow.svg)](https://huggingface.co/spaces/Diaugeia/TSEval)
+[![🤗 Datasets](https://img.shields.io/badge/🤗%20Datasets-TSEval--Static-orange.svg)](https://huggingface.co/datasets/Diaugeia/TSEval-Static)
+[![Next.js](https://img.shields.io/badge/Next.js-static%20export-black.svg?logo=next.js)](https://nextjs.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## Datasets on Hugging Face
+Every entry is a community submission — one agent trajectory and one verified result —
+ranked transparently across tracks, datasets, and horizons.
 
-The benchmark datasets and trained checkpoints live on the Hugging Face Hub:
+[**English**](README.md) | [**中文**](README_zh.md)
 
-- 📦 **Datasets** — [`Diaugeia/TSEval-Static`](https://huggingface.co/datasets/Diaugeia/TSEval-Static)
-  (the static benchmark sets: ETT, electricity, solar, traffic, weather, …)
-- 🧠 **Model weights** — [`Diaugeia/TSEval-Weights`](https://huggingface.co/datasets/Diaugeia/TSEval-Weights)
-  (checkpoints, referenced from submissions by `weights://` path + sha256; never stored in this repo)
+</div>
 
-This repo holds only the lightweight **evidence** of each run (small JSON), so it
-stays cheap to clone and to rebuild the board from.
+---
 
-## Tracks & datasets
+## 🧭 What is TSEval
+
+TSEval is the public leaderboard for [ModernTSF](https://github.com/Diaugeia/ModernTSF):
+an open, **reproducible** ranking of time-series forecasting methods. Instead of a
+table someone pasted in, every row is regenerated from a committed **submission** —
+the metrics, the agent trajectory, and the run metadata — so results stay comparable
+and auditable.
+
+This repository is the **single source of truth**: the website, the community
+submission store, and the pipeline that turns submissions into the ranked board.
+Push a submission → CI validates, aggregates, and redeploys.
+
+---
+
+## ✨ Highlights
+
+- 🏆 **Submission-driven** — the board is rebuilt from `submissions/` on every push; nothing is hand-edited.
+- 🔬 **Reproducible & auditable** — each submission carries metrics + trajectory + run metadata; multi-seed runs are averaged with `n_runs` and std.
+- 📈 **Method Evolution chart** — publication year vs MSE for 100+ methods, with a best-so-far (SOTA) frontier (ECharts; pan/hover/log).
+- 💹 **More than regression** — a Stock track with both forecasting metrics *and* a quant backtest view (P&L, Sharpe, drawdown), plus an Air-Quality track.
+- 🌏 **Bilingual & themed** — full EN / 中文, light/dark, on a self-contained static site (no backend, no cold start).
+- ⚡ **Build once, ship twice** — one CI artifact deploys to Cloudflare Pages (primary) and a Hugging Face Space (mirror).
+
+---
+
+## 🔗 Live & data
+
+- 🌐 **Site:** [tseval.diaugeia.ai](https://tseval.diaugeia.ai) · mirror: [Hugging Face Space](https://huggingface.co/spaces/Diaugeia/TSEval)
+- 📦 **Datasets** (on Hugging Face): [`Diaugeia/TSEval-Static`](https://huggingface.co/datasets/Diaugeia/TSEval-Static) — benchmark sets (ETT, electricity, solar, traffic, weather, …)
+- 🧠 **Weights:** [`Diaugeia/TSEval-Weights`](https://huggingface.co/datasets/Diaugeia/TSEval-Weights) — checkpoints, referenced from submissions by `weights://` + sha256 (never stored here)
+
+---
+
+## 📊 Tracks & datasets
 
 | Category | Track | Datasets | Source |
 |---|---|---|---|
 | Common / static | `time_series` | ETTh1, ETTm1, ETTh2, ETTm2, electricity, solar, traffic, weather | submission-driven |
-| Real-time | `stock` | Stock-HS300 (CSI-300) — regression + quant backtest views | regression from submissions; quant curated |
+| Real-time | `stock` | Stock-HS300 (CSI-300) — regression + quant backtest | regression from submissions; quant curated |
 | Real-time | `air_quality` | Air-CHNCities (6 pollutants) | curated |
 
 Each block is ranked per `(track, dataset, horizon)` by **MSE** (lower is better).
-The "Method Evolution" chart plots publication year vs MSE using per-model metadata
-in [`data/model-meta.json`](data/model-meta.json) (harvested from ModernTSF).
 
-## How to submit & how to upload data
+---
 
-> Full format, field reference, and the multi-seed averaging rules:
-> **[`SUBMITTING.md`](SUBMITTING.md)**.
+## 📤 Submit & upload
 
-**1. How to submit a result.** Run your model in
-[ModernTSF](https://github.com/Diaugeia/ModernTSF), which emits a submission bundle
-per the **TSF-Core contract** (`submission.json` + `report.md` + `trajectory.jsonl`,
-no weights). Add it under `submissions/<track>/<dataset>/<model>/<run_id>/` and open a
-PR. CI checks the contract schema + the ModernTSF binding before merge.
+> Full format + multi-seed averaging rules: **[SUBMITTING.md](SUBMITTING.md)**.
 
-**2. How to upload data.** Commit one `submission.json` per run, then push to `main`:
+Commit one `submission.json` per run, then push:
 
 ```bash
-# preview locally
-python3 pipeline/build_leaderboard.py --no-write
-git add submissions/…/submission.json
-git push    # CI: validate → aggregate → deploy to both targets
+python3 pipeline/build_leaderboard.py --no-write   # preview locally
+git add submissions/…/submission.json && git push  # CI: validate → aggregate → deploy
 ```
-
-`submission.json` (flat shape):
 
 ```jsonc
 {
   "model": "PatchTST",        // must match a ModernTSF model name
   "dataset_id": "ETTh1",      // ETTh1 … weather, or stock_hs300
   "track": "time_series",     // "time_series" | "realtime"
-  "seed": 2021,               // one seed per file
+  "seed": 2021,
   "results": [{ "horizon": 192, "metrics": { "mse": 0.45, "mae": 0.43, "corr": 0.62 } }]
 }
 ```
 
-**Averaging across seeds:** submit several files with the same `model`/`dataset`/
-`horizon` and different `seed` — the board reports the **mean**, plus `n_runs` and
-`<metric>_std`. No configuration needed.
+**Averaging:** submit several files with the same `model`/`dataset`/`horizon` and
+different `seed` — the row reports the **mean**, `n_runs`, and `<metric>_std`.
 
-## How the board is built
+---
+
+## ⚙️ How the board is built
 
 ```
 push main
@@ -79,21 +98,17 @@ push main
        ├ python3 pipeline/build_leaderboard.py   validate → aggregate submissions/ → data/leaderboard.json
        ├ bun run build                           Next static export → out/
        └ deploy the SAME out/ to two static targets:
-            ├─► Cloudflare Pages          →  tseval.diaugeia.ai   (primary)
-            └─► Hugging Face Space (static) →  TSEval space        (mirror)
+            ├─► Cloudflare Pages           →  tseval.diaugeia.ai   (primary)
+            └─► Hugging Face Space (static) →  TSEval space         (mirror)
 ```
 
 - `pipeline/validate.py` — TSF-Core contract schema + ModernTSF-binding check.
-- `pipeline/build_leaderboard.py` — aggregates submissions (mean/std/`n_runs`) and
-  ranks by MSE; preserves a **curated overlay** for blocks without raw submissions
-  yet (air-quality, the stock quant view).
-- `pipeline/build_model_meta.py` — regenerates `data/model-meta.json` from a
-  ModernTSF checkout.
+- `pipeline/build_leaderboard.py` — aggregates submissions (mean / std / `n_runs`), ranks by MSE; curated overlay for blocks without raw submissions yet (air-quality, stock quant).
+- `pipeline/build_model_meta.py` — regenerates `data/model-meta.json` (publication years) from a ModernTSF checkout.
 
-Build is **once** in CI; the same artifact ships to both targets, so they stay
-identical (static, CDN, no cold start).
+---
 
-## Develop
+## 🛠️ Develop
 
 ```bash
 bun install
@@ -101,10 +116,12 @@ bun run dev      # http://localhost:3000
 bun run build    # static export → out/
 ```
 
-## Repository layout
+---
+
+## 🗂️ Repository layout
 
 ```
-app/, src/, lib/, components/   self-contained Next app (UI + en/中文 copy + design tokens)
+app/, src/, lib/, components/   self-contained Next app (UI + EN/中文 copy + design tokens)
   src/leaderboard.tsx           orchestrator (category/track/view + URL state)
   src/dataset-card.tsx          per-dataset card (filters + chart slot + table)
   src/results-table.tsx         the ranked table
@@ -117,12 +134,21 @@ pipeline/                       contract schema + validate + build_leaderboard +
 .github/workflows/              validate (PRs) + deploy (build once → 2 targets)
 ```
 
-## Related
+---
 
-- [ModernTSF](https://github.com/Diaugeia/ModernTSF) — the forecasting library that
-  produces submissions and supplies model metadata.
+## 🔗 Related
+
+- [ModernTSF](https://github.com/Diaugeia/ModernTSF) — the forecasting library that produces submissions and supplies model metadata.
 - [Diaugeia](https://diaugeia.ai) — open infrastructure for AI research.
 
 ---
 
+## 📜 License
+
+Released under the [MIT License](LICENSE). Copyright © 2026 **Diaugeia.AI**.
+
+<div align="center">
+
 διαύγεια · open, reproducible time-series forecasting.
+
+</div>
