@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { Leaderboard, type LeaderboardData } from "@/src/index";
 import { DICT, type Locale } from "@/lib/dict";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Logo } from "@/components/logo";
 import raw from "@/data/leaderboard.json";
 
 const data = raw as unknown as LeaderboardData;
@@ -25,8 +26,8 @@ export default function Page() {
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-border bg-paper/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">
-          <a href="https://diaugeia.ai" className="font-serif text-lg tracking-[-0.01em] text-ink">
-            diaugeia<span className="text-accent">.ai</span>
+          <a href="https://diaugeia.ai" aria-label="diaugeia — home">
+            <Logo />
           </a>
           <div className="flex items-center gap-3">
             <div className="inline-flex items-center rounded-full border border-border p-0.5 text-[0.8rem]">
