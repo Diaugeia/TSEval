@@ -7,6 +7,9 @@ import { Seg } from "./leaderboard";
 import {
   LineChart,
   Line,
+  ScatterChart,
+  Scatter,
+  ReferenceLine,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -31,28 +34,33 @@ type VisualizationData = {
 type Props = {
   data: VisualizationData;
   availableModels: string[];
-  view?: 'regression' | 'quant';
+  view?: "regression" | "quant";
   copy: LeaderboardDict;
 };
 
 const COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6"];
 
-export function QuantVisualization({ data, availableModels, view = 'quant', copy }: Props) {
-  const gtLabel = copy.viz.groundTruth;
+// Resolve a model's series in the viz data, tolerating st_/ts_ prefixes.
+function resolveModel<T>(models: Record<string, T>, model: string, suffix = ""): T | null {
+  const keys = [`${model}${suffix}`, `st_${model}${suffix}`, `ts_${model}${suffix}`];
+  for (const k of keys) if (models[k]) return models[k];
+  return null;
+}
+
+export function QuantVisualization({ data, availableModels, view = "quant", copy }: Props) {
   const bhLabel = copy.viz.buyHold;
-  // 根据 view 自动选择初始视图模式
-  const defaultViewMode = view === 'regression' ? 'log_return' : 'cumulative_return';
-  const [viewMode, setViewMode] = useState<"log_return" | "cumulative_return">(defaultViewMode);
-  const [selectedModels, setSelectedModels] = useState<string[]>([
-    availableModels[0],
-    availableModels[1],
-  ].filter(Boolean));
+  // The chart is chosen by which leaderboard view we're in — no in-chart toggle.
+  // Quant view → strategy P&L (cumulative return); Regression view → prediction
+  // accuracy (predicted vs actual scatter).
+  const mode: "cumulative" | "scatter" = view === "regression" ? "scatter" : "cumulative";
+
+  const [selectedModels, setSelectedModels] = useState<string[]>(
+    [availableModels[0], availableModels[1]].filter(Boolean),
+  );
   const [config, setConfig] = useState<"conservative" | "balanced" | "aggressive">("conservative");
   const [modelSearchQuery, setModelSearchQuery] = useState("");
   const [showAllModels, setShowAllModels] = useState(false);
 
-  // Theme-aware chart colours so axes/grid and the dashed baseline line stay
-  // legible in dark mode (the baseline was hard-coded black before).
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const gridStroke = isDark ? "#2f2f2f" : "#e5e7eb";
@@ -61,92 +69,80 @@ export function QuantVisualization({ data, availableModels, view = 'quant', copy
 
   const toggleModel = (model: string) => {
     setSelectedModels((prev) => {
-      if (prev.includes(model)) {
-        return prev.filter((m) => m !== model);
-      } else if (prev.length < 5) {
-        return [...prev, model];
-      }
+      if (prev.includes(model)) return prev.filter((m) => m !== model);
+      if (prev.length < 5) return [...prev, model];
       return prev;
     });
   };
 
-  const chartData = useMemo(() => {
-    if (viewMode === "log_return") {
-      return data.log_return.dates.map((date, idx) => {
-        const point: Record<string, any> = { date };
-        point[gtLabel] = data.log_return.true_avg[idx];
-
-        selectedModels.forEach((model) => {
-          // Try to find model data with different prefixes
-          let modelData = null;
-          if (data.log_return.models[model]) {
-            modelData = data.log_return.models[model];
-          } else if (data.log_return.models[`st_${model}`]) {
-            modelData = data.log_return.models[`st_${model}`];
-          } else if (data.log_return.models[`ts_${model}`]) {
-            modelData = data.log_return.models[`ts_${model}`];
-          }
-          
-          if (modelData) {
-            point[model] = modelData[idx];
-          }
-        });
-        return point;
+  // ---- Cumulative-return (Quant view) line data ----
+  const cumulativeData = useMemo(() => {
+    return data.cumulative_return.dates.map((date, idx) => {
+      const point: Record<string, number | string> = { date };
+      point[bhLabel] = data.cumulative_return.baseline[config][idx];
+      selectedModels.forEach((model) => {
+        const series = resolveModel(data.cumulative_return.models, model, `_${config}`);
+        if (series) point[model] = series[idx];
       });
-    } else {
-      return data.cumulative_return.dates.map((date, idx) => {
-        const point: Record<string, any> = { date };
-        point[bhLabel] = data.cumulative_return.baseline[config][idx];
+      return point;
+    });
+  }, [selectedModels, config, data, bhLabel]);
 
-        selectedModels.forEach((model) => {
-          // Try to find model data with different prefixes
-          let fullKey = null;
-          if (data.cumulative_return.models[`${model}_${config}`]) {
-            fullKey = `${model}_${config}`;
-          } else if (data.cumulative_return.models[`st_${model}_${config}`]) {
-            fullKey = `st_${model}_${config}`;
-          } else if (data.cumulative_return.models[`ts_${model}_${config}`]) {
-            fullKey = `ts_${model}_${config}`;
-          }
-          
-          if (fullKey && data.cumulative_return.models[fullKey]) {
-            point[model] = data.cumulative_return.models[fullKey][idx];
-          }
-        });
-        return point;
-      });
-    }
-  }, [viewMode, selectedModels, config, data, gtLabel, bhLabel]);
+  // ---- Predicted-vs-actual (Regression view) scatter data ----
+  const scatterSeries = useMemo(() => {
+    return selectedModels.map((model) => {
+      const series = resolveModel(data.log_return.models, model);
+      const points = series
+        ? data.log_return.dates.map((date, idx) => ({
+            date,
+            actual: data.log_return.true_avg[idx],
+            predicted: series[idx],
+          }))
+        : [];
+      return { model, points };
+    });
+  }, [selectedModels, data]);
+
+  // Symmetric square domain so the 45° "perfect prediction" line reads true.
+  const scatterDomain = useMemo(() => {
+    let m = 0;
+    scatterSeries.forEach((s) =>
+      s.points.forEach((p) => {
+        m = Math.max(m, Math.abs(p.actual), Math.abs(p.predicted));
+      }),
+    );
+    m = m > 0 ? m * 1.05 : 0.05;
+    return [-m, m] as [number, number];
+  }, [scatterSeries]);
+
+  const pct = (v: number, digits = 1) => `${(v * 100).toFixed(digits)}%`;
 
   return (
     <div className="mt-6 rounded-2xl border border-border bg-surface p-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-4">
         <h3 className="font-serif text-xl tracking-[-0.01em] text-ink">
-          {copy.viz.title}
+          {mode === "cumulative" ? copy.viz.cumulativeTitle : copy.viz.scatterTitle}
         </h3>
-        <div className="flex items-center gap-2">
-          <Seg size="md" active={viewMode === "log_return"} onClick={() => setViewMode("log_return")}>
-            {copy.viz.logReturn}
-          </Seg>
-          <Seg size="md" active={viewMode === "cumulative_return"} onClick={() => setViewMode("cumulative_return")}>
-            {copy.viz.cumulativeReturn}
-          </Seg>
-        </div>
+        {mode === "cumulative" && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted">{copy.viz.configuration}:</span>
+            {(["conservative", "balanced", "aggressive"] as const).map((cfg) => (
+              <Seg key={cfg} active={config === cfg} onClick={() => setConfig(cfg)}>
+                {copy.quant.configs[cfg]}
+              </Seg>
+            ))}
+          </div>
+        )}
       </div>
 
-      {viewMode === "cumulative_return" && (
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-sm text-muted">{copy.viz.configuration}:</span>
-          {(["conservative", "balanced", "aggressive"] as const).map((cfg) => (
-            <Seg key={cfg} active={config === cfg} onClick={() => setConfig(cfg)}>
-              {copy.quant.configs[cfg]}
-            </Seg>
-          ))}
-        </div>
-      )}
+      {/* Reading guide */}
+      <p className="mb-5 rounded-lg border border-border bg-paper-2 px-4 py-2.5 text-xs leading-relaxed text-muted">
+        {mode === "cumulative" ? copy.viz.cumulativeCaption : copy.viz.scatterCaption}
+      </p>
 
+      {/* Model selector (shared) */}
       <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
+        <div className="mb-2 flex items-center justify-between">
           <div className="text-sm text-muted">
             {copy.viz.selectModels}{" "}
             <span className="text-faint">
@@ -165,11 +161,9 @@ export function QuantVisualization({ data, availableModels, view = 'quant', copy
           const isSearching = modelSearchQuery.trim() !== "";
           const filtered = availableModels.filter(
             (model) =>
-              !isSearching ||
-              model.toLowerCase().includes(modelSearchQuery.trim().toLowerCase()),
+              !isSearching || model.toLowerCase().includes(modelSearchQuery.trim().toLowerCase()),
           );
           const COLLAPSED = 24;
-          // Always keep selected chips visible; collapse the long tail otherwise.
           const visible =
             showAllModels || isSearching
               ? filtered
@@ -210,39 +204,117 @@ export function QuantVisualization({ data, availableModels, view = 'quant', copy
         })()}
       </div>
 
+      {/* Chart */}
       <div className="h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-            <XAxis dataKey="date" tick={{ fontSize: 12, fill: axisColor }} stroke={gridStroke} tickFormatter={(val) => val.slice(5)} />
-            <YAxis tick={{ fontSize: 12, fill: axisColor }} stroke={gridStroke} tickFormatter={(val) => `${(val * 100).toFixed(1)}%`} />
-            <Tooltip
-              contentStyle={isDark ? { backgroundColor: "#1c1c1c", border: `1px solid ${gridStroke}`, color: "#e5e7eb" } : undefined}
-              formatter={(value: any) => `${(value * 100).toFixed(2)}%`}
-              labelFormatter={(label) => `Date: ${label}`}
-            />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey={viewMode === "log_return" ? gtLabel : bhLabel}
-              stroke={baselineStroke}
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              dot={false}
-            />
-            {selectedModels.map((model, idx) => (
+          {mode === "cumulative" ? (
+            <LineChart data={cumulativeData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 12, fill: axisColor }}
+                stroke={gridStroke}
+                tickFormatter={(val) => String(val).slice(5)}
+              />
+              <YAxis
+                tick={{ fontSize: 12, fill: axisColor }}
+                stroke={gridStroke}
+                tickFormatter={(val) => pct(val)}
+              />
+              <Tooltip
+                contentStyle={
+                  isDark ? { backgroundColor: "#1c1c1c", border: `1px solid ${gridStroke}`, color: "#e5e7eb" } : undefined
+                }
+                formatter={(value) => pct(Number(value), 2)}
+                labelFormatter={(label) => `${label}`}
+              />
+              <Legend />
               <Line
-                key={model}
                 type="monotone"
-                dataKey={model}
-                stroke={COLORS[idx % COLORS.length]}
+                dataKey={bhLabel}
+                stroke={baselineStroke}
                 strokeWidth={2}
+                strokeDasharray="5 5"
                 dot={false}
               />
-            ))}
-          </LineChart>
+              {selectedModels.map((model, idx) => (
+                <Line
+                  key={model}
+                  type="monotone"
+                  dataKey={model}
+                  stroke={COLORS[idx % COLORS.length]}
+                  strokeWidth={2}
+                  dot={false}
+                />
+              ))}
+            </LineChart>
+          ) : (
+            <ScatterChart margin={{ top: 10, right: 30, left: 20, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+              <XAxis
+                type="number"
+                dataKey="actual"
+                domain={scatterDomain}
+                tick={{ fontSize: 12, fill: axisColor }}
+                stroke={gridStroke}
+                tickFormatter={(val) => pct(val)}
+                label={{ value: copy.viz.actual, position: "insideBottom", offset: -10, fontSize: 12, fill: axisColor }}
+              />
+              <YAxis
+                type="number"
+                dataKey="predicted"
+                domain={scatterDomain}
+                tick={{ fontSize: 12, fill: axisColor }}
+                stroke={gridStroke}
+                tickFormatter={(val) => pct(val)}
+                label={{ value: copy.viz.predicted, angle: -90, position: "insideLeft", fontSize: 12, fill: axisColor }}
+              />
+              {/* 45° perfect-prediction reference */}
+              <ReferenceLine
+                stroke={baselineStroke}
+                strokeDasharray="5 5"
+                segment={[
+                  { x: scatterDomain[0], y: scatterDomain[0] },
+                  { x: scatterDomain[1], y: scatterDomain[1] },
+                ]}
+                ifOverflow="extendDomain"
+              />
+              <Tooltip
+                cursor={{ stroke: gridStroke }}
+                contentStyle={
+                  isDark ? { backgroundColor: "#1c1c1c", border: `1px solid ${gridStroke}`, color: "#e5e7eb" } : undefined
+                }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                content={({ payload }: any) => {
+                  const p = payload?.[0]?.payload;
+                  if (!p) return null;
+                  return (
+                    <div className="rounded-md border border-border bg-paper px-3 py-2 text-xs shadow-sm">
+                      <div className="font-medium text-ink">{p.date}</div>
+                      <div className="text-muted">{copy.viz.actual}: {pct(p.actual, 2)}</div>
+                      <div className="text-muted">{copy.viz.predicted}: {pct(p.predicted, 2)}</div>
+                    </div>
+                  );
+                }}
+              />
+              <Legend />
+              {scatterSeries.map((s, idx) => (
+                <Scatter
+                  key={s.model}
+                  name={s.model}
+                  data={s.points}
+                  fill={COLORS[idx % COLORS.length]}
+                  fillOpacity={0.6}
+                  isAnimationActive={false}
+                />
+              ))}
+            </ScatterChart>
+          )}
         </ResponsiveContainer>
       </div>
+      {mode === "scatter" && (
+        <p className="mt-2 text-center text-xs text-faint">— — — {copy.viz.perfectLine}</p>
+      )}
     </div>
   );
 }

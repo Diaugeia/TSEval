@@ -55,6 +55,14 @@ export interface LeaderboardDict {
     showLess: string;
     groundTruth: string;
     buyHold: string;
+    // Strategy P&L (Quant view) + Prediction-accuracy scatter (Regression view).
+    cumulativeTitle: string;
+    cumulativeCaption: string;
+    scatterTitle: string;
+    scatterCaption: string;
+    predicted: string;
+    actual: string;
+    perfectLine: string;
   };
   strategy: {
     heading: string;
@@ -74,6 +82,8 @@ export interface LeaderboardDict {
     title: string;
     caption: string;
     dataset: string;
-    metric: string;
+    xAxis: string;
+    frontier: string;
+    clickHint: string;
   };
 }
