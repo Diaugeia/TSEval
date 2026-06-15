@@ -1,8 +1,10 @@
 # Submitting data to the TSEval leaderboard
 
-The leaderboard at **[tseval.diaugeia.ai](https://tseval.diaugeia.ai)** is rebuilt from
-the files under [`submissions/`](submissions/). To add or update results you commit
-submission files and push — CI validates, aggregates, and deploys automatically.
+The leaderboard at **[tseval.diaugeia.ai](https://tseval.diaugeia.ai)** is an open board
+you can check: every row is rebuilt from the submission evidence under
+[`submissions/`](submissions/) in this repo — the single source of truth. To add or
+update results you commit submission files and push — CI validates, aggregates, and
+deploys automatically, so the board is always a function of the committed evidence.
 
 ## TL;DR
 
@@ -91,5 +93,8 @@ bun run build                                                   # confirm the si
 ```
 
 Ranking is per `(track, dataset, horizon)` by **MSE** (lower is better). Weights are
-not stored here — they live in `Diaugeia/TSEval-Weights`, referenced by `weights://`
-path + sha256 in the manifest.
+**not** part of a submission and are never required to get on the board — a row earns
+its place with its result, trajectory, and report. If you *want* bit-level
+reproducibility, you may optionally archive your trained weights in the public
+[`Diaugeia/TSEval-Weights`](https://huggingface.co/datasets/Diaugeia/TSEval-Weights)
+dataset, but that is an invitation, not a gate.

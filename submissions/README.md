@@ -6,25 +6,31 @@ tags: [time-series, forecasting, leaderboard, benchmark]
 
 # TSEval — Submissions
 
-Append-only index of **leaderboard submissions** for the [Diaugeia](https://diaugeia.ai) TSEval benchmark.
-This repo holds only the lightweight **evidence** of each run so it stays cheap to clone and to rebuild the
-leaderboard from. Model weights live separately in [`Diaugeia/TSEval-Weights`](https://huggingface.co/datasets/Diaugeia/TSEval-Weights).
+Append-only evidence index of **leaderboard submissions** for the [Diaugeia](https://diaugeia.ai) TSEval benchmark,
+living inside the canonical [`github.com/Diaugeia/TSEval`](https://github.com/Diaugeia/TSEval) repo — one source of truth.
+This holds only the lightweight **evidence** of each run (result + trajectory + report) so it stays cheap to clone and to
+rebuild the leaderboard from. Weights are **not** part of a submission; they may *optionally* be archived in the public
+[`Diaugeia/TSEval-Weights`](https://huggingface.co/datasets/Diaugeia/TSEval-Weights) dataset for bit-level
+reproducibility, but are never required to get on the board.
 
 ## Layout
 
 ```
 <track>/<dataset>/<model>/<submission_id>/
-    submission.json     # tsf_core.SubmissionReport: manifest + DatasetSpec + RunRecord(s) + refs
+    submission.json     # tsf_core.SubmissionReport: manifest + DatasetSpec + RunRecord(s)
     trajectory.jsonl    # the agent's experiment process (synthetic for bulk imports)
-    report.html         # human-readable per-submission summary
+    report.md           # human-readable per-submission summary (Markdown)
 ```
 
-`submission.json` references its checkpoint in `TSEval-Weights` by `weights://` path + sha256 (manifest `files[].role = "weight"`).
+A submission carries its **result + trajectory + report only** — there is no weight reference in the bundle.
+Trained weights MAY *optionally* be archived in the public [`Diaugeia/TSEval-Weights`](https://huggingface.co/datasets/Diaugeia/TSEval-Weights)
+dataset for bit-level reproducibility, but are never required.
 
 ## Tracks
 
-- `realtime/` — live, periodically-refreshed datasets (e.g. `stock_hs300`, CSI-300, seq_len 20 → pred_len 5).
-- `time_series/`, `spatiotemporal/`, `covariate/` — static benchmark datasets (see `Diaugeia/TSEval-Static`).
+- `time_series/` — 8 static benchmark datasets (ETTh1, ETTh2, ETTm1, ETTm2, electricity, solar, traffic, weather), horizon 192, **108 models** (see `Diaugeia/TSEval-Static`).
+- `realtime/` — live, periodically-refreshed datasets: `stock_hs300` → **Stock-HS300 (CSI-300)**, seq_len 20 → pred_len 5, **135 models** (regression + quant backtest).
+- `air_quality/` — **Air-CHNCities**, 6 pollutants (PM2.5, PM10, O₃, NO₂, SO₂, CO), **134 models** (curated).
 
 ## How the leaderboard is built
 
@@ -42,4 +48,4 @@ yet (air-quality, the stock *quant* view) are preserved as a curated overlay.
 
 ## Current contents
 
-- `realtime/stock_hs300/` — the "百模大战" run: **108 models** × CSI-300 (seq 20 → pred 5), 124 submissions.
+- `realtime/stock_hs300/` — **135 models** × CSI-300 (seq 20 → pred 5), 135 submissions.

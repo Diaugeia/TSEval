@@ -21,15 +21,21 @@ ranked transparently across tracks, datasets, and horizons.
 
 ## 🧭 What is TSEval
 
-TSEval is the public leaderboard for [ModernTSF](https://github.com/Diaugeia/ModernTSF):
-an open, **reproducible** ranking of time-series forecasting methods. Instead of a
-table someone pasted in, every row is regenerated from a committed **submission** —
-the metrics, the agent trajectory, and the run metadata — so results stay comparable
-and auditable.
+TSEval is the public scoreboard for [ModernTSF](https://github.com/Diaugeia/ModernTSF):
+**ModernTSF is where experiments run; TSEval is where they're shown, in the open.**
+Most forecasting numbers are impossible to check — a paper reports them, a leaderboard
+reprints them, nobody re-runs them. TSEval works the other way around: every row is a
+committed **submission you can open** — the result, the agent's trajectory, and a
+readable report — so the board stays comparable, auditable, and reproducible. It's a
+function of the evidence, not a table someone pasted in.
 
-This repository is the **single source of truth**: the website, the community
-submission store, and the pipeline that turns submissions into the ranked board.
-Push a submission → CI validates, aggregates, and redeploys.
+This repository is the **single source of truth** — the website, every `submission.json`,
+and the pipeline that turns submissions into the ranked board. Push a submission → CI
+validates, aggregates, and redeploys.
+
+The honest part: on the CSI-300 stock track, 135 models end in a near-noise dead heat —
+no model really wins. We publish that as the headline, because a board worth trusting is
+one that tells you when the problem is genuinely hard.
 
 ---
 
@@ -48,7 +54,7 @@ Push a submission → CI validates, aggregates, and redeploys.
 
 - 🌐 **Site:** [tseval.diaugeia.ai](https://tseval.diaugeia.ai) · mirror: [Hugging Face Space](https://huggingface.co/spaces/Diaugeia/TSEval)
 - 📦 **Datasets** (on Hugging Face): [`Diaugeia/TSEval-Static`](https://huggingface.co/datasets/Diaugeia/TSEval-Static) — benchmark sets (ETT, electricity, solar, traffic, weather, …)
-- 🧠 **Weights:** [`Diaugeia/TSEval-Weights`](https://huggingface.co/datasets/Diaugeia/TSEval-Weights) — checkpoints, referenced from submissions by `weights://` + sha256 (never stored here)
+- 🧠 **Weights (optional):** [`Diaugeia/TSEval-Weights`](https://huggingface.co/datasets/Diaugeia/TSEval-Weights) — a public, *optional* reproducibility archive of trained checkpoints. A submission carries no weights and never needs a `.pth` to rank.
 
 ---
 
