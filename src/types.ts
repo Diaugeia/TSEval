@@ -85,5 +85,8 @@ export interface LeaderboardDict {
     xAxis: string;
     frontier: string;
     clickHint: string;
+    scale: string;
+    scaleLinear: string;
+    scaleLog: string;
   };
 }

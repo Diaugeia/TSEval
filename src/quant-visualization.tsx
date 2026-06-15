@@ -297,7 +297,8 @@ export function QuantVisualization({ data, availableModels, view = "quant", copy
                   );
                 }}
               />
-              <Legend />
+              {/* Legend at top so it doesn't collide with the x-axis label below. */}
+              <Legend verticalAlign="top" align="center" wrapperStyle={{ paddingBottom: 8 }} />
               {scatterSeries.map((s, idx) => (
                 <Scatter
                   key={s.model}

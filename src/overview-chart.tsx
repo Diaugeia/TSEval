@@ -25,12 +25,17 @@ const META = modelMeta as Meta;
 type Datasets = Record<string, { horizons: Record<string, any[]> }>;
 
 type Point = {
-  year: number;
+  year: number; // true publication year (shown in tooltip/readout)
+  x: number; // plot x: years before 2020 collapse onto 2019 ("<2020")
   mse: number;
   model: string;
   venue: string | null;
   isTop: boolean;
 };
+
+// Years before 2020 are sparse, so collapse them into a single "<2020" column.
+const PRE_CUTOFF = 2020;
+const xOf = (year: number) => (year < PRE_CUTOFF ? PRE_CUTOFF - 1 : year);
 
 // Case-insensitive lookup into the ModernTSF metadata map.
 const metaLookup = (() => {
@@ -49,10 +54,11 @@ export function OverviewChart({ datasets, copy }: { datasets: Datasets; copy: Le
   const names = Object.keys(datasets);
   const [dataset, setDataset] = useState(names[0]);
   const [selected, setSelected] = useState<Point | null>(null);
+  const [yScale, setYScale] = useState<"linear" | "log">("linear");
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
-  const { points, frontier, yCap } = useMemo(() => {
+  const { points, frontier, yCap, yFloor } = useMemo(() => {
     const block = datasets[dataset] ?? datasets[names[0]];
     const h = block ? Object.keys(block.horizons)[0] : undefined;
     const rows = (h && block ? block.horizons[h] : []) ?? [];
@@ -62,37 +68,39 @@ export function OverviewChart({ datasets, copy }: { datasets: Datasets; copy: Le
       .map((r) => {
         const m = metaLookup(r.model);
         return m && typeof m.year === "number"
-          ? { year: m.year, mse: r.mse as number, model: r.model, venue: m.venue, isTop: false }
+          ? { year: m.year, x: xOf(m.year), mse: r.mse as number, model: r.model, venue: m.venue, isTop: false }
           : null;
       })
       .filter((p): p is Point => p !== null);
 
     // Robust upper cap so a couple of divergent baselines (MSE in the tens) don't
     // flatten the whole competitive field. Keep everything up to max(p95, 6×median);
-    // the few points above clip out of view but stay clickable nowhere — that's fine,
-    // they're degenerate runs, not part of the evolution story.
+    // the few points above clip out of view — they're degenerate runs, not part of
+    // the evolution story. (The log scale shows them all instead.)
     const sorted = all.map((p) => p.mse).sort((a, b) => a - b);
     const q = (f: number) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(f * sorted.length))] : 1);
     const cap = sorted.length ? Math.max(q(0.95), q(0.5) * 6) : 1;
+    const floor = sorted.length ? sorted[0] : 0.1;
 
-    // Best-so-far frontier + which method *set* each new SOTA. We label only those
-    // frontier-setters: they're spread across years (and distinct MSE levels), so
-    // their names don't collide the way the tightly-clustered lowest-MSE pack does.
-    const yearsSorted = Array.from(new Set(all.map((p) => p.year))).sort((a, b) => a - b);
+    // Best-so-far frontier + which method *set* each new SOTA, computed over the
+    // collapsed x-columns. We label only those frontier-setters: spread across
+    // years (and distinct MSE levels), so their names don't collide the way the
+    // tightly-clustered lowest-MSE pack does.
+    const xsSorted = Array.from(new Set(all.map((p) => p.x))).sort((a, b) => a - b);
     let best = Infinity;
-    const front: { year: number; mse: number }[] = [];
+    const front: { x: number; mse: number }[] = [];
     const setters = new Set<string>();
-    for (const y of yearsSorted) {
-      const inYear = all.filter((p) => p.year === y);
-      const champ = inYear.reduce((a, b) => (b.mse < a.mse ? b : a));
+    for (const x of xsSorted) {
+      const inCol = all.filter((p) => p.x === x);
+      const champ = inCol.reduce((a, b) => (b.mse < a.mse ? b : a));
       if (champ.mse < best) {
         best = champ.mse;
         setters.add(champ.model);
       }
-      front.push({ year: y, mse: best });
+      front.push({ x, mse: best });
     }
     all.forEach((p) => (p.isTop = setters.has(p.model)));
-    return { points: all, frontier: front, yCap: cap };
+    return { points: all, frontier: front, yCap: cap, yFloor: floor };
   }, [datasets, dataset, names]);
 
   const topPoints = points.filter((p) => p.isTop);
@@ -103,11 +111,13 @@ export function OverviewChart({ datasets, copy }: { datasets: Datasets; copy: Le
   const gold = isDark ? "#d6b25e" : "#8c6f24";
   const dim = isDark ? "#6b7280" : "#9ca3af";
 
-  const years = points.map((p) => p.year);
-  const minYear = years.length ? Math.min(...years) : 2016;
-  const maxYear = years.length ? Math.max(...years) : 2026;
-  const yearTicks: number[] = [];
-  for (let y = minYear; y <= maxYear; y++) yearTicks.push(y);
+  const hasPre = points.some((p) => p.year < PRE_CUTOFF);
+  const xs = points.map((p) => p.x);
+  const minX = xs.length ? Math.min(...xs) : PRE_CUTOFF - 1;
+  const maxX = xs.length ? Math.max(...xs) : 2026;
+  const xTicks: number[] = [];
+  for (let x = minX; x <= maxX; x++) xTicks.push(x);
+  const isLog = yScale === "log";
 
   return (
     <div className="mb-6 rounded-2xl border border-border bg-surface p-5">
@@ -133,6 +143,17 @@ export function OverviewChart({ datasets, copy }: { datasets: Datasets; copy: Le
         {copy.overview.caption.replace("{dataset}", dataset)}
       </p>
 
+      {/* Y-axis scale toggle */}
+      <div className="mb-3 flex items-center gap-1.5">
+        <span className="mr-1 text-xs text-muted">{copy.overview.scale}:</span>
+        <Seg active={yScale === "linear"} onClick={() => setYScale("linear")}>
+          {copy.overview.scaleLinear}
+        </Seg>
+        <Seg active={yScale === "log"} onClick={() => setYScale("log")}>
+          {copy.overview.scaleLog}
+        </Seg>
+      </div>
+
       {/* Selection readout / click hint */}
       <div className="mb-3 flex min-h-[1.5rem] items-center gap-2 text-xs">
         {selected ? (
@@ -157,19 +178,21 @@ export function OverviewChart({ datasets, copy }: { datasets: Datasets; copy: Le
             <CartesianGrid strokeDasharray="3 3" stroke={grid} />
             <XAxis
               type="number"
-              dataKey="year"
-              domain={[minYear - 0.5, maxYear + 0.5]}
-              ticks={yearTicks}
+              dataKey="x"
+              domain={[minX - 0.6, maxX + 0.5]}
+              ticks={xTicks}
               tick={{ fontSize: 12, fill: axis }}
               stroke={grid}
               allowDecimals={false}
+              tickFormatter={(v) => (hasPre && v === PRE_CUTOFF - 1 ? `<${PRE_CUTOFF}` : String(v))}
               label={{ value: copy.overview.xAxis, position: "insideBottom", offset: -14, fontSize: 12, fill: axis }}
             />
             <YAxis
               type="number"
               dataKey="mse"
-              domain={[0, yCap]}
-              allowDataOverflow
+              scale={isLog ? "log" : "linear"}
+              domain={isLog ? [Math.max(yFloor * 0.9, 1e-4), "auto"] : [0, yCap]}
+              allowDataOverflow={!isLog}
               tick={{ fontSize: 12, fill: axis }}
               stroke={grid}
               tickFormatter={(v) => Number(v).toFixed(2)}
