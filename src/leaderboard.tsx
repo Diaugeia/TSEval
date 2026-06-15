@@ -48,7 +48,7 @@ export function Leaderboard({ data, copy, locale = "en" }: { data: LeaderboardDa
   });
 
   const [view, setView] = useState<"regression" | "quant">(
-    searchParams.get("view") === "quant" ? "quant" : "regression",
+    searchParams.get("view") === "regression" ? "regression" : "quant",
   );
 
   const [quantConfig, setQuantConfig] = useState<"conservative" | "balanced" | "aggressive">("conservative");
@@ -132,11 +132,11 @@ export function Leaderboard({ data, copy, locale = "en" }: { data: LeaderboardDa
         />
         {track === "stock" && (
           <div className="flex items-center gap-1.5">
-            <Seg size="md" active={view === "regression"} onClick={() => setView("regression")}>
-              {copy.quant.regression}
-            </Seg>
             <Seg size="md" active={view === "quant"} onClick={() => setView("quant")}>
               {copy.quant.quant}
+            </Seg>
+            <Seg size="md" active={view === "regression"} onClick={() => setView("regression")}>
+              {copy.quant.regression}
             </Seg>
           </div>
         )}
