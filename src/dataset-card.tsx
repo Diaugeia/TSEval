@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { LeaderboardDict } from "./types";
 import type { DatasetBlock } from "./lib/leaderboard-data";
 import { getModelType, STOCK_VIZ_MODELS } from "./lib/model-types";
@@ -17,6 +17,8 @@ export function DatasetCard({
   query,
   hideTitle = false,
   view: viewProp,
+  quantConfig: quantConfigProp,
+  onQuantConfigChange,
   locale = "en",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   visualizationData,
@@ -28,6 +30,8 @@ export function DatasetCard({
   query: string;
   hideTitle?: boolean;
   view?: "regression" | "quant";
+  quantConfig?: "conservative" | "balanced" | "aggressive";
+  onQuantConfigChange?: (cfg: "conservative" | "balanced" | "aggressive") => void;
   locale?: "en" | "zh";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   visualizationData?: any;
@@ -43,9 +47,16 @@ export function DatasetCard({
 
   const defaultSortKey = (view === "quant" ? "total_return" : "mse") as SortKey;
   const [sortKey, setSortKey] = useState<SortKey>(defaultSortKey);
-  // Start "best-first" for the default metric (e.g. quant → highest Total Return on top).
   const [sortDir, setSortDir] = useState(() => betterDirOf(defaultSortKey));
-  const [quantConfig, setQuantConfig] = useState<"conservative" | "balanced" | "aggressive">("conservative");
+
+  useEffect(() => {
+    const k = (view === "quant" ? "total_return" : "mse") as SortKey;
+    setSortKey(k);
+    setSortDir(betterDirOf(k));
+  }, [view]);
+
+  const quantConfig = quantConfigProp ?? "conservative";
+  const setQuantConfig = onQuantConfigChange ?? (() => {});
 
   // Model type filter — at least one must stay selected.
   const [showTimeSeries, setShowTimeSeries] = useState(true);
@@ -176,12 +187,14 @@ export function DatasetCard({
           ) : (
             <>
               {chip("seq_len: 20")}
-              {chip(`pred_len: ${horizons[0]}`)}
+              {view !== "quant" && chip(`pred_len: ${horizons[0]}`)}
             </>
           )}
           {/* Horizon selector — only when there's more than one (single horizon
-              already shows as the pred_len chip). Air quality uses its own row. */}
+              already shows as the pred_len chip). Air quality uses its own row.
+              Hidden in quant view where horizons don't apply. */}
           {track !== "air_quality" &&
+            view !== "quant" &&
             horizons.length > 1 &&
             horizons.map((h) => (
               <Seg key={h} active={h === horizon} onClick={() => setHorizon(h)}>
@@ -205,7 +218,7 @@ export function DatasetCard({
 
       {/* Trends chart above the table (stock track only) */}
       {track === "stock" && visualizationData && (
-        <QuantVisualization data={visualizationData} availableModels={STOCK_VIZ_MODELS} view={view} copy={copy} />
+        <QuantVisualization data={visualizationData} availableModels={STOCK_VIZ_MODELS} view={view} copy={copy} quantConfig={quantConfig} />
       )}
 
       <ResultsTable

@@ -51,6 +51,7 @@ export interface LeaderboardDict {
     selectModels: string;
     maxSelected: string;
     searchModels: string;
+    addModel: string;
     showAll: string;
     showLess: string;
     groundTruth: string;
@@ -58,8 +59,10 @@ export interface LeaderboardDict {
     // Strategy P&L (Quant view) + Prediction-accuracy scatter (Regression view).
     cumulativeTitle: string;
     cumulativeCaption: string;
+    cumulativeFootnote: string;
     scatterTitle: string;
     scatterCaption: string;
+    scatterFootnote: string;
     predicted: string;
     actual: string;
     perfectLine: string;
@@ -86,7 +89,7 @@ export interface LeaderboardDict {
     frontier: string;
     clickHint: string;
     scale: string;
-    scaleLinear: string;
-    scaleLog: string;
+    scaleOverview: string;
+    scaleZoom: string;
   };
 }

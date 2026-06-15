@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { Seg } from "./ui/seg";
@@ -29,6 +29,8 @@ type Point = {
 
 const PRE_CUTOFF = 2020;
 const xOf = (year: number) => (year < PRE_CUTOFF ? PRE_CUTOFF - 1 : year);
+const PICK_COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6"];
+const MAX_PICKS = 5;
 
 // Case-insensitive lookup into the ModernTSF metadata map.
 const metaLookup = (() => {
@@ -45,11 +47,28 @@ const metaLookup = (() => {
 export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: LeaderboardDict }) {
   const names = orderDatasets(Object.keys(datasets));
   const [dataset, setDataset] = useState(names[0]);
-  const [yScale, setYScale] = useState<"linear" | "log">("linear");
-  const [selected, setSelected] = useState<Point | null>(null);
+  const [yScale, setYScale] = useState<"overview" | "zoom">("overview");
+  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const toggleModel = (name: string) => {
+    setSelectedModels((prev) =>
+      prev.includes(name) ? prev.filter((m) => m !== name) : prev.length < MAX_PICKS ? [...prev, name] : prev,
+    );
+  };
+  const removeModel = (name: string) => setSelectedModels((prev) => prev.filter((m) => m !== name));
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerQuery, setPickerQuery] = useState("");
+  const pickerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setPickerOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [pickerOpen]);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
-  const isLog = yScale === "log";
+  const isZoom = yScale === "zoom";
 
   const model = useMemo(() => {
     const block = datasets[dataset] ?? datasets[names[0]];
@@ -68,9 +87,9 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
 
     const sortedMse = all.map((p) => p.mse).sort((a, b) => a - b);
     const q = (f: number) => (sortedMse.length ? sortedMse[Math.min(sortedMse.length - 1, Math.floor(f * sortedMse.length))] : 1);
-    const cap = sortedMse.length ? Math.max(q(0.9), q(0.5) * 3) : 1; // linear upper bound
+    const cap = sortedMse.length ? Math.max(q(0.9), q(0.5) * 3) : 1;
     const floor = sortedMse.length ? sortedMse[0] : 0.1;
-    const dataMax = sortedMse.length ? sortedMse[sortedMse.length - 1] : 1;
+    const zoomCap = sortedMse.length ? q(0.75) * 1.15 : cap;
 
     // Best-so-far frontier + the methods that set each new SOTA (labelled).
     const xsSorted = Array.from(new Set(all.map((p) => p.x))).sort((a, b) => a - b);
@@ -99,7 +118,7 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
     const xsAll = all.map((p) => p.x);
     const minX = xsAll.length ? Math.min(...xsAll) : PRE_CUTOFF - 1;
     const maxX = xsAll.length ? Math.max(...xsAll) : 2026;
-    return { all, frontier, cap, floor, dataMax, hasPre, minX, maxX };
+    return { all, frontier, cap, floor, zoomCap, hasPre, minX, maxX };
   }, [datasets, dataset, names]);
 
   const grid = isDark ? "#2f2f2f" : "#e5e7eb";
@@ -108,22 +127,30 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
   const gold = isDark ? "#d6b25e" : "#8c6f24";
   const dim = isDark ? "#6b7280" : "#9ca3af";
 
+  const availableModelNames = useMemo(
+    () => Array.from(new Set(model.all.map((p) => p.model))).sort(),
+    [model],
+  );
+  const pickerFiltered = availableModelNames.filter(
+    (m) => !pickerQuery.trim() || m.toLowerCase().includes(pickerQuery.trim().toLowerCase()),
+  );
+
   const toItem = (p: Point) => ({ value: [p.jx, p.mse], name: p.model, venue: p.venue, year: p.year, mse: p.mse });
 
   const option = useMemo(() => {
-    const { all, frontier, cap, floor, hasPre, minX, maxX } = model;
-    const rest = all.filter((p) => !p.isTop).map(toItem);
-    const top = all.filter((p) => p.isTop).map(toItem);
-    // Both scales frame the competitive band (cap excludes divergent baselines) so
-    // the dense low cluster gets the height instead of being squeezed under the
-    // outliers. Log additionally widens the spacing of the low end.
+    const { all, frontier, cap, floor, zoomCap, hasPre, minX, maxX } = model;
+    const selSet = new Set(selectedModels);
+    const rest = all.filter((p) => !p.isTop && !selSet.has(p.model)).map(toItem);
+    const top = all.filter((p) => p.isTop && !selSet.has(p.model)).map(toItem);
     const linLo = Math.max(0, floor - (cap - floor) * 0.06);
+    const zoomLo = floor * 0.95;
 
     return {
       animationDuration: 600,
       animationDurationUpdate: 500,
       animationEasing: "cubicOut",
       grid: { left: 52, right: 22, top: 18, bottom: 46 },
+      legend: { show: false },
       tooltip: {
         trigger: "item",
         backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
@@ -163,13 +190,13 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
         },
       },
       yAxis: {
-        type: isLog ? "log" : "value",
+        type: "value",
         name: "MSE",
         nameLocation: "end",
         nameGap: 10,
         nameTextStyle: { color: axis, fontSize: 13, fontWeight: 600, align: "left" },
-        ...(isLog
-          ? { min: Number((floor * 0.92).toPrecision(2)), max: Number(cap.toPrecision(3)) }
+        ...(isZoom
+          ? { min: zoomLo, max: zoomCap }
           : { min: linLo, max: cap }),
         axisLine: { lineStyle: { color: grid } },
         axisTick: { show: false },
@@ -213,17 +240,31 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
           emphasis: { scale: 1.6, label: { show: true, color: ink, fontSize: 13, fontWeight: 700 } },
           z: 3,
         },
+        ...selectedModels.flatMap((name, i) => {
+          const point = all.find((p) => p.model === name);
+          if (!point) return [];
+          return [{
+            name,
+            type: "scatter",
+            data: [toItem(point)],
+            symbolSize: 14,
+            itemStyle: { color: PICK_COLORS[i % PICK_COLORS.length], opacity: 1 },
+            label: { show: true, formatter: () => name, position: "top", color: ink, fontSize: 12, fontWeight: 600 },
+            emphasis: { scale: 1.5, label: { show: true, color: ink, fontSize: 13, fontWeight: 700 } },
+            z: 4,
+          }];
+        }),
       ],
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [model, isDark, isLog, copy]);
+  }, [model, isDark, isZoom, copy, selectedModels]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onEvents = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     click: (p: any) => {
       const d = p?.data;
-      if (d?.name) setSelected({ year: d.year, x: 0, jx: 0, mse: d.mse, model: d.name, venue: d.venue ?? null, isTop: false });
+      if (d?.name) toggleModel(d.name);
     },
   };
 
@@ -234,7 +275,7 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
         <div className="flex items-center gap-1.5">
           <span className="mr-1 text-xs text-muted">{copy.overview.dataset}:</span>
           {names.map((n) => (
-            <Seg key={n} active={dataset === n} onClick={() => { setDataset(n); setSelected(null); }}>
+            <Seg key={n} active={dataset === n} onClick={() => setDataset(n)}>
               {n}
             </Seg>
           ))}
@@ -244,20 +285,70 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
 
       <div className="mb-3 flex items-center gap-1.5">
         <span className="mr-1 text-xs text-muted">{copy.overview.scale}:</span>
-        <Seg active={!isLog} onClick={() => setYScale("linear")}>{copy.overview.scaleLinear}</Seg>
-        <Seg active={isLog} onClick={() => setYScale("log")}>{copy.overview.scaleLog}</Seg>
+        <Seg active={!isZoom} onClick={() => setYScale("overview")}>{copy.overview.scaleOverview}</Seg>
+        <Seg active={isZoom} onClick={() => setYScale("zoom")}>{copy.overview.scaleZoom}</Seg>
       </div>
 
-      <div className="mb-3 flex min-h-[1.5rem] items-center gap-2 text-xs">
-        {selected ? (
-          <span className="inline-flex items-center gap-2 rounded-md border border-border bg-paper-2 px-2.5 py-1">
-            <span className="font-medium text-ink">{selected.model}</span>
-            {selected.venue && <span className="text-muted">· {selected.venue}</span>}
-            <span className="text-muted">· {selected.year}</span>
-            <span className="font-mono text-accent">MSE {selected.mse.toFixed(4)}</span>
-          </span>
+      <div className="mb-3 flex min-h-[1.5rem] flex-wrap items-center gap-2 text-xs">
+        {selectedModels.length > 0 ? (
+          selectedModels.map((name, idx) => {
+            const point = model.all.find((p) => p.model === name);
+            return (
+              <span key={name} className={`inline-flex items-center gap-1.5 rounded-md border border-border bg-paper-2 px-2.5 py-1${point ? "" : " opacity-40"}`}>
+                <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: PICK_COLORS[idx % PICK_COLORS.length] }} />
+                <span className="font-medium text-ink">{name}</span>
+                {point && <span className="font-mono text-accent">MSE {point.mse.toFixed(4)}</span>}
+                <button type="button" onClick={() => removeModel(name)} className="ml-0.5 text-muted hover:text-ink">&times;</button>
+              </span>
+            );
+          })
         ) : (
           <span className="text-faint">{copy.overview.clickHint}</span>
+        )}
+        {selectedModels.length < MAX_PICKS && (
+          <div className="relative" ref={pickerRef}>
+            <button
+              type="button"
+              onClick={() => { setPickerOpen(!pickerOpen); setPickerQuery(""); }}
+              className="rounded-md border border-dashed border-border px-2 py-0.5 text-xs font-medium text-accent hover:border-accent/50"
+            >
+              {copy.viz.addModel}
+            </button>
+            {pickerOpen && (
+              <div className="absolute left-0 top-full z-20 mt-1 w-56 rounded-lg border border-border bg-surface shadow-lg">
+                <div className="border-b border-border p-2">
+                  <input
+                    type="search"
+                    value={pickerQuery}
+                    onChange={(e) => setPickerQuery(e.target.value)}
+                    placeholder={copy.viz.searchModels}
+                    autoFocus
+                    className="w-full rounded-md border border-border bg-paper-2 px-2.5 py-1.5 text-xs text-ink placeholder:text-faint focus:border-accent focus:outline-none"
+                  />
+                </div>
+                <div className="max-h-48 overflow-y-auto p-1">
+                  {pickerFiltered.map((name) => {
+                    const isSelected = selectedModels.includes(name);
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        disabled={!isSelected && selectedModels.length >= MAX_PICKS}
+                        onClick={() => toggleModel(name)}
+                        className={`w-full rounded px-2.5 py-1.5 text-left text-xs ${
+                          isSelected
+                            ? "bg-accent/10 font-medium text-accent"
+                            : "text-muted hover:bg-paper-2 hover:text-ink disabled:opacity-40"
+                        }`}
+                      >
+                        {name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         )}
         <span className="ml-auto inline-flex items-center gap-1.5 text-faint">
           <span className="inline-block h-0.5 w-5" style={{ backgroundColor: gold }} />
@@ -266,12 +357,12 @@ export function EvolutionChart({ datasets, copy }: { datasets: Datasets; copy: L
       </div>
 
       <ReactECharts
-        key={isLog ? "log" : "lin"}
+        key={isZoom ? "zoom" : "overview"}
         option={option}
         onEvents={onEvents}
         style={{ height: 360, width: "100%" }}
         opts={{ renderer: "canvas" }}
-        notMerge={false}
+        notMerge
         lazyUpdate
       />
     </div>

@@ -51,6 +51,8 @@ export function Leaderboard({ data, copy, locale = "en" }: { data: LeaderboardDa
     searchParams.get("view") === "quant" ? "quant" : "regression",
   );
 
+  const [quantConfig, setQuantConfig] = useState<"conservative" | "balanced" | "aggressive">("conservative");
+
   const [track, setTrack] = useState(() => {
     const tracks = initialCategory === "static" ? STATIC_TRACKS : REALTIME_TRACKS;
     const t = searchParams.get("track");
@@ -118,8 +120,8 @@ export function Leaderboard({ data, copy, locale = "en" }: { data: LeaderboardDa
         </div>
       )}
 
-      {/* Model filter */}
-      <div className="mt-5">
+      {/* Model filter + view toggle */}
+      <div className="mt-5 flex flex-wrap items-center gap-3">
         <input
           type="search"
           value={query}
@@ -128,19 +130,17 @@ export function Leaderboard({ data, copy, locale = "en" }: { data: LeaderboardDa
           aria-label={copy.searchPlaceholder}
           className="w-full max-w-sm rounded-lg border border-border bg-paper-2 px-3.5 py-2 text-sm text-ink placeholder:text-faint focus:border-accent focus:outline-none"
         />
+        {track === "stock" && (
+          <div className="flex items-center gap-1.5">
+            <Seg size="md" active={view === "regression"} onClick={() => setView("regression")}>
+              {copy.quant.regression}
+            </Seg>
+            <Seg size="md" active={view === "quant"} onClick={() => setView("quant")}>
+              {copy.quant.quant}
+            </Seg>
+          </div>
+        )}
       </div>
-
-      {/* Regression vs Quant — stock only */}
-      {track === "stock" && (
-        <div className="mt-5 flex items-center gap-2">
-          <Seg size="md" active={view === "regression"} onClick={() => setView("regression")}>
-            {copy.quant.regression}
-          </Seg>
-          <Seg size="md" active={view === "quant"} onClick={() => setView("quant")}>
-            {copy.quant.quant}
-          </Seg>
-        </div>
-      )}
 
       {/* Method evolution chart at the top of the static section */}
       {category === "static" && current && datasets.length > 0 && (
@@ -164,6 +164,8 @@ export function Leaderboard({ data, copy, locale = "en" }: { data: LeaderboardDa
               query={query}
               hideTitle
               view={view}
+              quantConfig={quantConfig}
+              onQuantConfigChange={setQuantConfig}
               locale={locale}
               visualizationData={visualizationData}
             />
