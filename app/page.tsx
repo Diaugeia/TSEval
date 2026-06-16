@@ -26,7 +26,7 @@ export default function Page() {
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-border bg-paper/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">
-          <a href="https://diaugeia.ai" aria-label="diaugeia — home">
+          <a href="https://diaugeia.ai" aria-label="Diaugeia.AI — home">
             <Logo />
           </a>
           <div className="flex items-center gap-3">

@@ -10,7 +10,7 @@ license: mit
 
 # TSEval — Time-Series Forecasting Leaderboard
 
-Built by [Diaugeia](https://diaugeia.ai). Source + submissions:
+Built by [Diaugeia.AI](https://diaugeia.ai). Source + submissions:
 [github.com/Diaugeia/TSEval](https://github.com/Diaugeia/TSEval).
 
 This Space is auto-deployed from that repo's CI (static export). Also live at

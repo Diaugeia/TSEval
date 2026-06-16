@@ -138,7 +138,7 @@ pipeline/                       合约 schema + validate + build_leaderboard + b
 ## 🔗 相关
 
 - [ModernTSF](https://github.com/Diaugeia/ModernTSF) —— 产出提交、并提供模型元数据的预测库。
-- [Diaugeia](https://diaugeia.ai) —— 面向 AI 研究的开放基础设施。
+- [Diaugeia.AI](https://diaugeia.ai) —— 面向 AI 研究的开放基础设施。
 
 ---
 

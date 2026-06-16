@@ -6,7 +6,7 @@ tags: [time-series, forecasting, leaderboard, benchmark]
 
 # TSEval — Submissions
 
-Append-only evidence index of **leaderboard submissions** for the [Diaugeia](https://diaugeia.ai) TSEval benchmark,
+Append-only evidence index of **leaderboard submissions** for the [Diaugeia.AI](https://diaugeia.ai) TSEval benchmark,
 living inside the canonical [`github.com/Diaugeia/TSEval`](https://github.com/Diaugeia/TSEval) repo — one source of truth.
 This holds only the lightweight **evidence** of each run (result + trajectory + report) so it stays cheap to clone and to
 rebuild the leaderboard from. Weights are **not** part of a submission; they may *optionally* be archived in the public

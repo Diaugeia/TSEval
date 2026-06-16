@@ -145,7 +145,7 @@ pipeline/                       contract schema + validate + build_leaderboard +
 ## 🔗 Related
 
 - [ModernTSF](https://github.com/Diaugeia/ModernTSF) — the forecasting library that produces submissions and supplies model metadata.
-- [Diaugeia](https://diaugeia.ai) — open infrastructure for AI research.
+- [Diaugeia.AI](https://diaugeia.ai) — open infrastructure for AI research.
 
 ---
 
